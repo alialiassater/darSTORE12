@@ -1,0 +1,142 @@
+server/auth.ts(1,22): error TS7016: Could not find a declaration file for module 'passport'. '/opt/render/project/src/node_modules/passport/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/passport` if it exists or add a new declaration (.d.ts) file containing `declare module 'passport';`
+server/auth.ts(2,43): error TS7016: Could not find a declaration file for module 'passport-local'. '/opt/render/project/src/node_modules/passport-local/lib/index.js' implicitly has an 'any' type.
+Menu
+  Try `npm i --save-dev @types/passport-local` if it exists or add a new declaration (.d.ts) file containing `declare module 'passport-local';`
+server/auth.ts(3,25): error TS7016: Could not find a declaration file for module 'express'. '/opt/render/project/src/node_modules/express/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/express` if it exists or add a new declaration (.d.ts) file containing `declare module 'express';`
+server/auth.ts(4,21): error TS7016: Could not find a declaration file for module 'express-session'. '/opt/render/project/src/node_modules/express-session/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/express-session` if it exists or add a new declaration (.d.ts) file containing `declare module 'express-session';`
+server/auth.ts(8,36): error TS2307: Cannot find module '@shared/schema' or its corresponding type declarations.
+server/auth.ts(42,30): error TS7006: Parameter 'username' implicitly has an 'any' type.
+server/auth.ts(42,40): error TS7006: Parameter 'password' implicitly has an 'any' type.
+server/auth.ts(42,50): error TS7006: Parameter 'done' implicitly has an 'any' type.
+server/auth.ts(56,27): error TS7006: Parameter 'user' implicitly has an 'any' type.
+server/auth.ts(56,33): error TS7006: Parameter 'done' implicitly has an 'any' type.
+server/auth.ts(57,47): error TS7006: Parameter 'done' implicitly has an 'any' type.
+server/db.ts(3,25): error TS2307: Cannot find module '@shared/schema' or its corresponding type declarations.
+server/index.ts(1,63): error TS7016: Could not find a declaration file for module 'express'. '/opt/render/project/src/node_modules/express/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/express` if it exists or add a new declaration (.d.ts) file containing `declare module 'express';`
+server/index.ts(17,14): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/index.ts(17,19): error TS7006: Parameter '_res' implicitly has an 'any' type.
+server/index.ts(17,25): error TS7006: Parameter 'buf' implicitly has an 'any' type.
+server/index.ts(36,10): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/index.ts(36,15): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/index.ts(36,20): error TS7006: Parameter 'next' implicitly has an 'any' type.
+server/index.ts(42,24): error TS7006: Parameter 'bodyJson' implicitly has an 'any' type.
+server/index.ts(42,34): error TS7019: Rest parameter 'args' implicitly has an 'any[]' type.
+server/routes.ts(1,30): error TS7016: Could not find a declaration file for module 'express'. '/opt/render/project/src/node_modules/express/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/express` if it exists or add a new declaration (.d.ts) file containing `declare module 'express';`
+server/routes.ts(5,21): error TS2307: Cannot find module '@shared/routes' or its corresponding type declarations.
+server/routes.ts(6,35): error TS2307: Cannot find module '@shared/schema' or its corresponding type declarations.
+server/routes.ts(8,22): error TS7016: Could not find a declaration file for module 'passport'. '/opt/render/project/src/node_modules/passport/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/passport` if it exists or add a new declaration (.d.ts) file containing `declare module 'passport';`
+server/routes.ts(9,27): error TS2307: Cannot find module '@shared/schema' or its corresponding type declarations.
+server/routes.ts(10,33): error TS2307: Cannot find module '@shared/algeria-data' or its corresponding type declarations.
+server/routes.ts(47,43): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(47,48): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(62,24): error TS7006: Parameter 'err' implicitly has an 'any' type.
+server/routes.ts(75,34): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(75,39): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(75,44): error TS7006: Parameter 'next' implicitly has an 'any' type.
+server/routes.ts(79,7): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(79,12): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(79,17): error TS7006: Parameter 'next' implicitly has an 'any' type.
+server/routes.ts(83,24): error TS7006: Parameter 'err' implicitly has an 'any' type.
+server/routes.ts(90,35): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(90,40): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(91,17): error TS7006: Parameter 'err' implicitly has an 'any' type.
+server/routes.ts(97,30): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(97,35): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(106,39): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(106,44): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(113,38): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(113,43): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(119,56): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(119,61): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(134,55): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(134,60): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(145,58): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(145,63): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(153,44): error TS7006: Parameter '_req' implicitly has an 'any' type.
+server/routes.ts(153,50): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(158,61): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(158,66): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(169,60): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(169,65): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(180,63): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(180,68): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(188,53): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(188,58): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(194,56): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(194,61): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(218,56): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(218,61): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(225,43): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(225,48): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(265,40): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(265,45): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(277,39): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(277,44): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(283,62): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(283,67): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(312,59): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(312,64): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(326,57): error TS7006: Parameter '_req' implicitly has an 'any' type.
+server/routes.ts(326,63): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(331,56): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(331,61): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(338,59): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(338,64): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(350,60): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(350,65): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(364,59): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(364,64): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(383,62): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(383,67): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(398,42): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(398,47): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(404,41): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(404,46): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(410,58): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(410,63): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(424,62): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(424,67): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(441,54): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(441,59): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(476,67): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes.ts(476,72): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(488,56): error TS7006: Parameter '_req' implicitly has an 'any' type.
+server/routes.ts(488,62): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/routes.ts(493,52): error TS7006: Parameter '_req' implicitly has an 'any' type.
+server/routes.ts(493,58): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/static.ts(1,39): error TS7016: Could not find a declaration file for module 'express'. '/opt/render/project/src/node_modules/express/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/express` if it exists or add a new declaration (.d.ts) file containing `declare module 'express';`
+server/static.ts(16,24): error TS7006: Parameter '_req' implicitly has an 'any' type.
+server/static.ts(16,30): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/storage.ts(10,8): error TS2307: Cannot find module '@shared/schema' or its corresponding type declarations.
+server/storage.ts(12,21): error TS7016: Could not find a declaration file for module 'express-session'. '/opt/render/project/src/node_modules/express-session/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/express-session` if it exists or add a new declaration (.d.ts) file containing `declare module 'express-session';`
+server/storage.ts(13,23): error TS7016: Could not find a declaration file for module 'connect-pg-simple'. '/opt/render/project/src/node_modules/connect-pg-simple/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/connect-pg-simple` if it exists or add a new declaration (.d.ts) file containing `declare module 'connect-pg-simple';`
+server/vite.ts(1,30): error TS7016: Could not find a declaration file for module 'express'. '/opt/render/project/src/node_modules/express/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/express` if it exists or add a new declaration (.d.ts) file containing `declare module 'express';`
+server/vite.ts(2,64): error TS2307: Cannot find module 'vite' or its corresponding type declarations.
+server/vite.ts(4,24): error TS6059: File '/opt/render/project/src/vite.config.ts' is not under 'rootDir' '/opt/render/project/src/server'. 'rootDir' is expected to contain all source files.
+server/vite.ts(7,24): error TS2307: Cannot find module 'nanoid' or its corresponding type declarations.
+server/vite.ts(23,15): error TS7006: Parameter 'msg' implicitly has an 'any' type.
+server/vite.ts(23,20): error TS7006: Parameter 'options' implicitly has an 'any' type.
+server/vite.ts(34,30): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/vite.ts(34,35): error TS7006: Parameter 'res' implicitly has an 'any' type.
+server/vite.ts(34,40): error TS7006: Parameter 'next' implicitly has an 'any' type.
+server/vite.ts(39,9): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+vite.config.ts(1,30): error TS2307: Cannot find module 'vite' or its corresponding type declarations.
+vite.config.ts(2,19): error TS2307: Cannot find module '@vitejs/plugin-react' or its corresponding type declarations.
+vite.config.ts(4,33): error TS2307: Cannot find module '@replit/vite-plugin-runtime-error-modal' or its corresponding type declarations.
+vite.config.ts(13,24): error TS2307: Cannot find module '@replit/vite-plugin-cartographer' or its corresponding type declarations.
+vite.config.ts(16,24): error TS2307: Cannot find module '@replit/vite-plugin-dev-banner' or its corresponding type declarations.
+vite.config.ts(24,25): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+vite.config.ts(25,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+vite.config.ts(26,31): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+vite.config.ts(29,22): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+vite.config.ts(31,26): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
