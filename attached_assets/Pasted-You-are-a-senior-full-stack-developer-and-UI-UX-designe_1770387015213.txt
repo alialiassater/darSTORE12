@@ -1,0 +1,129 @@
+You are a senior full-stack developer and UI/UX designer.
+
+I already have an existing full-stack project.
+Enhance, upgrade, and improve it professionally.
+
+==============================
+GENERAL CHANGES
+==============================
+
+- Change the website name everywhere to:
+  "دار علي بن زيد للطباعة والنشر"
+
+- Replace the current logo with a custom logo (placeholder for now).
+- Automatically generate the website color palette based on the logo colors.
+- Apply the same colors across:
+  - Navbar
+  - Buttons
+  - Admin dashboard
+  - Cards
+  - Forms
+
+- Change the Arabic font to a modern, readable font such as:
+  - Cairo
+  - IBM Plex Arabic
+  - Tajawal
+
+==============================
+AUTHENTICATION & USERS
+==============================
+
+- Add customer registration (Sign Up) page.
+- Allow customers to create accounts.
+- Improve login error handling (clear Arabic messages).
+- Admin can:
+  - View all customers
+  - Edit customer accounts
+  - Disable / enable accounts
+  - Reset passwords
+
+==============================
+STORE & CART
+==============================
+
+- Improve shopping cart behavior:
+  - Cart opens as a side drawer or modal
+  - Add / remove items
+  - Update quantity
+  - Show total price
+
+- Checkout process:
+  - Customer information form
+  - Delivery address
+  - Phone number
+  - Payment method selection
+
+==============================
+PAYMENT
+==============================
+
+- Add "Cash on Delivery" (الدفع عند الاستلام) as the main payment method.
+- No online payment required for now.
+- Orders are confirmed and stored in the database.
+
+==============================
+ADMIN DASHBOARD (FULL CONTROL)
+==============================
+
+Admin can manage:
+
+📚 Books:
+- Add books
+- Edit books
+- Delete books
+- Manage stock quantity
+- Update prices
+- Upload book images
+- Enable / disable books
+
+📂 Categories:
+- Add categories
+- Edit categories
+- Delete categories
+- Assign books to categories
+
+📦 Orders:
+- View all orders
+- View order details
+- Update order status:
+  - Pending
+  - Confirmed
+  - Shipped
+  - Delivered
+  - Cancelled
+
+👤 Customers:
+- View customer list
+- View order history per customer
+- Manage accounts
+
+📊 Activity Log:
+- Track admin actions:
+  - Login
+  - Book added / edited / deleted
+  - Price changes
+  - Order status updates
+- Show timestamps and admin name
+
+==============================
+EXTRA FEATURES (ADD YOUR OWN IDEAS)
+==============================
+
+- Dashboard statistics:
+  - Total books
+  - Total orders
+  - Total customers
+  - Low stock alerts
+
+- Better Arabic RTL support everywhere
+- Professional UI for a real publishing house
+- Clean folder structure
+- Reusable components
+- Clear comments in code
+- Ready for future expansion (online payment, invoices)
+
+==============================
+FINAL GOAL
+==============================
+
+Transform this project into a complete, professional, real-world Arabic publishing house e-commerce system with full admin control and customer management.
