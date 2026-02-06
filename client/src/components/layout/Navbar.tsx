@@ -36,7 +36,7 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 w-full border-b bg-primary text-primary-foreground shadow-sm">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2 font-serif text-xl font-bold text-primary-foreground" data-testid="link-logo">
-          <BookOpen className="h-5 w-5" />
+          <img src="/logo.png" alt="Dar Ali BenZid Logo" className="h-8 w-auto brightness-0 invert" />
           <span className="hidden sm:inline">{t("دار علي بن زيد", "Dar Ali BenZid")}</span>
           <span className="sm:hidden">{t("دار علي بن زيد", "DAB")}</span>
         </Link>
