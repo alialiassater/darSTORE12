@@ -539,6 +539,12 @@ async function seedWilayas() {
 
 async function seedDatabase(hashPassword: (pwd: string) => Promise<string>) {
   const existing = await storage.getUserByUsername("admin@daralibenzid.com");
+  if (existing) {
+    const adminPwd = await hashPassword("assater123");
+    await storage.updateUser(existing.id, { password: adminPwd, role: "admin" });
+    console.log("Admin password reset on startup");
+    return;
+  }
   if (!existing) {
     console.log("Seeding database...");
     const adminPwd = await hashPassword("assater123");
