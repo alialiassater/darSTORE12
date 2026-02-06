@@ -33,10 +33,10 @@ export function Navbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
+    <nav className="sticky top-0 z-50 w-full border-b bg-primary text-primary-foreground shadow-sm">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2 font-serif text-xl font-bold text-primary" data-testid="link-logo">
-          <BookOpen className="h-5 w-5 text-accent" />
+        <Link href="/" className="flex items-center gap-2 font-serif text-xl font-bold text-primary-foreground" data-testid="link-logo">
+          <BookOpen className="h-5 w-5" />
           <span className="hidden sm:inline">{t("دار علي بن زيد", "Dar Ali BenZid")}</span>
           <span className="sm:hidden">{t("دار علي بن زيد", "DAB")}</span>
         </Link>
@@ -47,7 +47,7 @@ export function Navbar() {
               key={link.href}
               href={link.href}
               className={`text-sm font-medium transition-colors ${
-                location === link.href ? "text-primary font-bold" : "text-muted-foreground"
+                location === link.href ? "text-primary-foreground font-bold underline underline-offset-4" : "text-primary-foreground/80 hover:text-primary-foreground"
               }`}
               data-testid={`link-nav-${link.href.replace("/", "") || "home"}`}
             >
@@ -61,7 +61,7 @@ export function Navbar() {
             variant="ghost"
             size="sm"
             onClick={toggleLanguage}
-            className="font-serif px-2"
+            className="font-serif px-2 text-primary-foreground hover:bg-primary-foreground/10"
             data-testid="button-language-toggle"
           >
             {language === "ar" ? "EN" : "عربي"}
@@ -71,13 +71,13 @@ export function Navbar() {
             <>
               {user.role === "admin" && (
                 <Link href="/admin">
-                  <Button variant="ghost" size="sm" className="gap-2" data-testid="link-admin">
+                  <Button variant="ghost" size="sm" className="gap-2 text-primary-foreground hover:bg-primary-foreground/10" data-testid="link-admin">
                     <LayoutDashboard className="w-4 h-4" />
                     {t("لوحة التحكم", "Dashboard")}
                   </Button>
                 </Link>
               )}
-              <Button variant="outline" size="sm" onClick={() => logout()} className="gap-2" data-testid="button-logout">
+              <Button variant="outline" size="sm" onClick={() => logout()} className="gap-2 bg-transparent text-primary-foreground border-primary-foreground/20 hover:bg-primary-foreground hover:text-primary" data-testid="button-logout">
                 <LogOut className="w-4 h-4" />
                 {t("خروج", "Logout")}
               </Button>
@@ -85,13 +85,13 @@ export function Navbar() {
           ) : (
             <div className="flex items-center gap-2">
               <Link href="/login">
-                <Button variant="ghost" size="sm" className="gap-2" data-testid="link-login">
+                <Button variant="ghost" size="sm" className="gap-2 text-primary-foreground hover:bg-primary-foreground/10" data-testid="link-login">
                   <LogIn className="w-4 h-4" />
                   {t("دخول", "Login")}
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button size="sm" className="gap-2" data-testid="link-signup">
+                <Button size="sm" className="gap-2 bg-secondary text-secondary-foreground hover:bg-secondary/90" data-testid="link-signup">
                   <UserPlus className="w-4 h-4" />
                   {t("حساب جديد", "Sign Up")}
                 </Button>
@@ -99,10 +99,10 @@ export function Navbar() {
             </div>
           )}
 
-          <Button variant="ghost" size="icon" className="relative" onClick={() => setCartOpen(true)} data-testid="button-cart">
-            <ShoppingBag className="w-5 h-5 text-foreground" />
+          <Button variant="ghost" size="icon" className="relative text-primary-foreground hover:bg-primary-foreground/10" onClick={() => setCartOpen(true)} data-testid="button-cart">
+            <ShoppingBag className="w-5 h-5" />
             {itemCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs no-default-hover-elevate no-default-active-elevate" data-testid="badge-cart-count">
+              <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-secondary text-secondary-foreground no-default-hover-elevate no-default-active-elevate" data-testid="badge-cart-count">
                 {itemCount}
               </Badge>
             )}

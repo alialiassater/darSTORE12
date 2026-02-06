@@ -6,8 +6,8 @@
 
 @layer base {
   :root {
-    --background: 40 20% 98%; /* Warm paper white */
-    --foreground: 220 30% 15%; /* Deep ink blue-black */
+    --background: 0 0% 100%;
+    --foreground: 220 30% 15%;
 
     --card: 0 0% 100%;
     --card-foreground: 220 30% 15%;
@@ -15,16 +15,16 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 30% 15%;
 
-    --primary: 215 55% 35%; /* Academic Blue */
+    --primary: 154 50% 30%; /* Dark Green from logo */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 35 30% 90%; /* Parchment beige */
-    --secondary-foreground: 215 55% 35%;
+    --secondary: 0 80% 50%; /* Red from logo banner */
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 220 10% 95%;
     --muted-foreground: 220 10% 45%;
 
-    --accent: 38 45% 55%; /* Gold/Bronze accent */
+    --accent: 200 80% 45%; /* Blue from logo globe */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -32,7 +32,7 @@
 
     --border: 220 15% 90%;
     --input: 220 15% 90%;
-    --ring: 215 55% 35%;
+    --ring: 154 50% 30%;
 
     --radius: 0.5rem;
   }
@@ -46,7 +46,7 @@
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif;
+    @apply font-serif text-primary;
   }
 }
 
