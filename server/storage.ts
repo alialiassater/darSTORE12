@@ -66,9 +66,19 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
+    pool.query(`
+      CREATE TABLE IF NOT EXISTS "session" (
+        "sid" varchar NOT NULL COLLATE "default",
+        "sess" json NOT NULL,
+        "expire" timestamp(6) NOT NULL,
+        CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+      );
+      CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
+    `).catch((err: any) => console.error("Session table creation error:", err));
+
     this.sessionStore = new PostgresSessionStore({
       pool,
-      createTableIfMissing: true,
+      createTableIfMissing: false,
     });
   }
 
