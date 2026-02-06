@@ -15,31 +15,35 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen page-transition">
       {/* Hero Section */}
-      <section className="relative bg-primary text-primary-foreground py-20 md:py-32 overflow-hidden">
-        {/* Abstract Background Pattern */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <div className="absolute -top-24 -right-24 w-96 h-96 bg-accent rounded-full blur-3xl"></div>
-            <div className="absolute top-1/2 left-0 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+      <section className="relative min-h-[500px] flex items-center justify-center overflow-hidden bg-primary">
+        {/* Background Image / Pattern with Dark Overlay */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-primary/90 z-10" />
+          <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] z-0" />
+          
+          {/* Abstract blobs for some depth */}
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-accent/30 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute top-1/2 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
         </div>
 
-        <div className="container mx-auto px-4 relative z-10 text-center max-w-4xl">
-          <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 leading-tight text-white drop-shadow-md">
-            {t("دار علي بن زيد للطباعة والنشر ", "Dar Ali Benzid for Printing & Publishing")}
+        <div className="container mx-auto px-4 relative z-20 text-center max-w-4xl py-20 md:py-32">
+          <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 leading-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+            {t("دار علي بن زيد للطباعة والنشر", "Dar Ali Benzid for Printing & Publishing")}
           </h1>
-          <p className="text-lg md:text-xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-sm font-medium">
             {t(
-              "دار علي بن زيد للطباعة والنشر تقدم لك نخبة من أفضل الكتب العربية والعالمية. تصفح مجموعتنا المختارة بعناية.",
+              "دار علي بن زيد للطباعة والنشر تقدم لك نخبة من أفضل الكتب العربية والعالمية. تصفح اصداراتنا .",
               "Dar Ali BenZid for Printing & Publishing offers you a selection of the best Arabic and international books. Browse our carefully curated collection."
             )}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/store">
-              <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20 text-lg px-8">
+              <Button size="lg" className="bg-accent text-accent-foreground hover-elevate active-elevate-2 shadow-xl text-lg px-8">
                 {t("تصفح الكتب", "Browse Books")}
               </Button>
             </Link>
             <Link href="/store?category=new">
-              <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-white/10 text-lg px-8">
+              <Button size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10 backdrop-blur-sm text-lg px-8">
                 {t("الإصدارات الجديدة", "New Releases")}
               </Button>
             </Link>
