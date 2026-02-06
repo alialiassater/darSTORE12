@@ -23,7 +23,7 @@ export default function Home() {
         </div>
 
         <div className="container mx-auto px-4 relative z-10 text-center max-w-4xl">
-          <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 leading-tight">
+          <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 leading-tight text-white drop-shadow-md">
             {t("دار علي بن زيد للطباعة والنشر ", "Dar Ali Benzid for Printing & Publishing")}
           </h1>
           <p className="text-lg md:text-xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto leading-relaxed">
