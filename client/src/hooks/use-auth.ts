@@ -27,11 +27,11 @@ export function useAuth() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
       });
-      
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error("Login failed");
+        throw new Error(data.message || "Login failed");
       }
-      return await res.json();
+      return data;
     },
     onSuccess: (data) => {
       queryClient.setQueryData([api.auth.me.path], data);

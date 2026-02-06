@@ -79,12 +79,22 @@ export async function registerRoutes(
     if (!result.success) return res.status(400).json({ message: "Invalid input" });
     next();
   }, (req, res, next) => {
-    passport.authenticate("local", (err: any, user: any) => {
-      if (err) return next(err);
-      if (!user) return res.status(401).json({ message: "Invalid credentials" });
+    passport.authenticate("local", (err: any, user: any, info: any) => {
+      if (err) {
+        console.error("Login error:", err);
+        return res.status(500).json({ message: "Server error during login" });
+      }
+      if (!user) {
+        console.log("Login failed for:", req.body.username, "info:", info);
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
       req.login(user, (err) => {
-        if (err) return next(err);
-        res.json(user);
+        if (err) {
+          console.error("Session error:", err);
+          return res.status(500).json({ message: "Session error" });
+        }
+        const { password, ...safeUser } = user;
+        res.json(safeUser);
       });
     })(req, res, next);
   });
