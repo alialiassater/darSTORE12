@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -37,7 +37,7 @@ export default function Login() {
 
   const onSubmit = (data: z.infer<typeof loginSchema>) => {
     login(data, {
-      onSuccess: () => setLocation("/admin"), // Redirect to dashboard on success usually
+      onSuccess: (data: any) => setLocation(data?.role === "admin" ? "/admin" : "/"),
     });
   };
 
@@ -90,11 +90,14 @@ export default function Login() {
             </form>
           </Form>
         </CardContent>
-        <CardFooter className="justify-center border-t p-4 bg-muted/20">
+        <CardFooter className="justify-center border-t p-4 bg-muted/20 flex-col gap-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <BookOpen className="w-4 h-4" />
-            <span>{t("مكتبة الوراق", "Al-Warraq Books")}</span>
+            <span>{t("دار علي بن زيد للطباعة والنشر", "Dar Ali BenZid Publishing")}</span>
           </div>
+          <Link href="/signup" className="text-sm text-primary font-medium">
+            {t("إنشاء حساب جديد", "Create new account")}
+          </Link>
         </CardFooter>
       </Card>
     </div>

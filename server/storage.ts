@@ -1,10 +1,13 @@
 import { db } from "./db";
 import {
-  users, books,
+  users, books, categories, orders, orderItems, activityLogs,
   type User, type InsertUser,
-  type Book, type InsertBook, type UpdateBookRequest
+  type Book, type InsertBook, type UpdateBookRequest,
+  type Category, type InsertCategory,
+  type Order, type OrderItem, type OrderWithItems,
+  type ActivityLog, type InsertActivityLog
 } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -13,17 +16,37 @@ const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   sessionStore: session.Store;
-  // User operations
+
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  getUsers(): Promise<User[]>;
+  updateUser(id: number, updates: Partial<User>): Promise<User>;
 
-  // Book operations
   getBooks(category?: string, search?: string): Promise<Book[]>;
   getBook(id: number): Promise<Book | undefined>;
   createBook(book: InsertBook): Promise<Book>;
   updateBook(id: number, updates: UpdateBookRequest): Promise<Book>;
   deleteBook(id: number): Promise<void>;
+  countBooks(): Promise<number>;
+  countLowStockBooks(): Promise<number>;
+
+  getCategories(): Promise<Category[]>;
+  getCategory(id: number): Promise<Category | undefined>;
+  createCategory(cat: InsertCategory): Promise<Category>;
+  updateCategory(id: number, updates: Partial<InsertCategory>): Promise<Category>;
+  deleteCategory(id: number): Promise<void>;
+
+  createOrder(userId: number | null, customerName: string, phone: string, address: string, city: string, notes: string | undefined, total: number, items: { bookId: number; quantity: number; unitPrice: number }[]): Promise<OrderWithItems>;
+  getOrders(): Promise<OrderWithItems[]>;
+  getOrder(id: number): Promise<OrderWithItems | undefined>;
+  getUserOrders(userId: number): Promise<OrderWithItems[]>;
+  updateOrderStatus(id: number, status: string): Promise<Order>;
+  countOrders(): Promise<number>;
+  totalRevenue(): Promise<number>;
+
+  logActivity(log: InsertActivityLog): Promise<ActivityLog>;
+  getActivityLogs(limit?: number): Promise<ActivityLog[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -36,7 +59,6 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  // === User ===
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
@@ -52,28 +74,22 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  // === Book ===
+  async getUsers(): Promise<User[]> {
+    return db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    const [user] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
+    return user;
+  }
+
   async getBooks(category?: string, search?: string): Promise<Book[]> {
-    let query = db.select().from(books).orderBy(desc(books.createdAt));
-    
-    // Simple in-memory filtering for simplicity if complex SQL needed, 
-    // but here we can just chain if needed. 
-    // For now, returning all and letting basic filtering happen or implementing simple where clauses
-    // Drizzle query builder is flexible.
-    
-    // Note: For advanced search/filtering, we'd add .where() clauses here.
-    // Keeping it simple for MVP.
-    const allBooks = await query;
-    
+    const allBooks = await db.select().from(books).orderBy(desc(books.createdAt));
     return allBooks.filter(book => {
       if (category && book.category !== category) return false;
       if (search) {
-        const searchLower = search.toLowerCase();
-        return (
-          book.titleAr.toLowerCase().includes(searchLower) ||
-          book.titleEn.toLowerCase().includes(searchLower) ||
-          book.author.toLowerCase().includes(searchLower)
-        );
+        const s = search.toLowerCase();
+        return book.titleAr.toLowerCase().includes(s) || book.titleEn.toLowerCase().includes(s) || book.author.toLowerCase().includes(s);
       }
       return true;
     });
@@ -90,16 +106,125 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateBook(id: number, updates: UpdateBookRequest): Promise<Book> {
-    const [book] = await db
-      .update(books)
-      .set(updates)
-      .where(eq(books.id, id))
-      .returning();
+    const [book] = await db.update(books).set(updates).where(eq(books.id, id)).returning();
     return book;
   }
 
   async deleteBook(id: number): Promise<void> {
     await db.delete(books).where(eq(books.id, id));
+  }
+
+  async countBooks(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)::int` }).from(books);
+    return result[0]?.count ?? 0;
+  }
+
+  async countLowStockBooks(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)::int` }).from(books).where(sql`${books.stock} < 5`);
+    return result[0]?.count ?? 0;
+  }
+
+  async getCategories(): Promise<Category[]> {
+    return db.select().from(categories);
+  }
+
+  async getCategory(id: number): Promise<Category | undefined> {
+    const [cat] = await db.select().from(categories).where(eq(categories.id, id));
+    return cat;
+  }
+
+  async createCategory(cat: InsertCategory): Promise<Category> {
+    const [created] = await db.insert(categories).values(cat).returning();
+    return created;
+  }
+
+  async updateCategory(id: number, updates: Partial<InsertCategory>): Promise<Category> {
+    const [cat] = await db.update(categories).set(updates).where(eq(categories.id, id)).returning();
+    return cat;
+  }
+
+  async deleteCategory(id: number): Promise<void> {
+    await db.delete(categories).where(eq(categories.id, id));
+  }
+
+  async createOrder(userId: number | null, customerName: string, phone: string, address: string, city: string, notes: string | undefined, total: number, items: { bookId: number; quantity: number; unitPrice: number }[]): Promise<OrderWithItems> {
+    const [order] = await db.insert(orders).values({
+      userId, customerName, phone, address, city, notes, total: String(total), status: "pending"
+    }).returning();
+
+    const insertedItems: OrderItem[] = [];
+    for (const item of items) {
+      const [oi] = await db.insert(orderItems).values({
+        orderId: order.id,
+        bookId: item.bookId,
+        quantity: item.quantity,
+        unitPrice: String(item.unitPrice),
+      }).returning();
+      insertedItems.push(oi);
+    }
+
+    return { ...order, items: insertedItems };
+  }
+
+  async getOrders(): Promise<OrderWithItems[]> {
+    const allOrders = await db.select().from(orders).orderBy(desc(orders.createdAt));
+    const result: OrderWithItems[] = [];
+    for (const order of allOrders) {
+      const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
+      const itemsWithBooks = [];
+      for (const item of items) {
+        const [book] = await db.select().from(books).where(eq(books.id, item.bookId));
+        itemsWithBooks.push({ ...item, book });
+      }
+      result.push({ ...order, items: itemsWithBooks });
+    }
+    return result;
+  }
+
+  async getOrder(id: number): Promise<OrderWithItems | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    if (!order) return undefined;
+    const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
+    const itemsWithBooks = [];
+    for (const item of items) {
+      const [book] = await db.select().from(books).where(eq(books.id, item.bookId));
+      itemsWithBooks.push({ ...item, book });
+    }
+    return { ...order, items: itemsWithBooks };
+  }
+
+  async getUserOrders(userId: number): Promise<OrderWithItems[]> {
+    const allOrders = await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
+    const result: OrderWithItems[] = [];
+    for (const order of allOrders) {
+      const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
+      result.push({ ...order, items });
+    }
+    return result;
+  }
+
+  async updateOrderStatus(id: number, status: string): Promise<Order> {
+    const [order] = await db.update(orders).set({ status }).where(eq(orders.id, id)).returning();
+    return order;
+  }
+
+  async countOrders(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)::int` }).from(orders);
+    return result[0]?.count ?? 0;
+  }
+
+  async totalRevenue(): Promise<number> {
+    const result = await db.select({ total: sql<number>`COALESCE(sum(total::numeric), 0)::numeric` }).from(orders).where(sql`${orders.status} != 'cancelled'`);
+    return Number(result[0]?.total ?? 0);
+  }
+
+  async logActivity(log: InsertActivityLog): Promise<ActivityLog> {
+    const [entry] = await db.insert(activityLogs).values(log).returning();
+    return entry;
+  }
+
+  async getActivityLogs(limit = 100): Promise<ActivityLog[]> {
+    return db.select().from(activityLogs).orderBy(desc(activityLogs.createdAt)).limit(limit);
   }
 }
 

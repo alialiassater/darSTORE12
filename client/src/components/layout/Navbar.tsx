@@ -1,22 +1,25 @@
 import { Link, useLocation } from "wouter";
 import { useLanguage } from "@/hooks/use-language";
 import { useAuth } from "@/hooks/use-auth";
+import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
-import { 
-  BookOpen, 
-  ShoppingBag, 
-  LogIn, 
-  LogOut, 
+import {
+  BookOpen,
+  ShoppingBag,
+  LogIn,
+  LogOut,
   LayoutDashboard,
   Menu,
-  X
+  UserPlus
 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
 
 export function Navbar() {
   const { t, language, setLanguage } = useLanguage();
   const { user, logout } = useAuth();
+  const { itemCount, setIsOpen: setCartOpen } = useCart();
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -31,109 +34,120 @@ export function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 font-serif text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
-          <BookOpen className="h-6 w-6 text-accent" />
-          <span>{t("مكتبة الوراق", "Al-Warraq Books")}</span>
+      <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
+        <Link href="/" className="flex items-center gap-2 font-serif text-xl font-bold text-primary" data-testid="link-logo">
+          <BookOpen className="h-5 w-5 text-accent" />
+          <span className="hidden sm:inline">{t("دار علي بن زيد", "Dar Ali BenZid")}</span>
+          <span className="sm:hidden">{t("دار علي بن زيد", "DAB")}</span>
         </Link>
 
-        {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
-            <Link 
-              key={link.href} 
-              href={link.href} 
-              className={`text-sm font-medium transition-colors hover:text-primary ${
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`text-sm font-medium transition-colors ${
                 location === link.href ? "text-primary font-bold" : "text-muted-foreground"
               }`}
+              data-testid={`link-nav-${link.href.replace("/", "") || "home"}`}
             >
               {link.label}
             </Link>
           ))}
         </div>
 
-        {/* Actions */}
-        <div className="hidden md:flex items-center gap-3">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+        <div className="hidden md:flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={toggleLanguage}
             className="font-serif px-2"
+            data-testid="button-language-toggle"
           >
-            {language === "ar" ? "English" : "العربية"}
+            {language === "ar" ? "EN" : "عربي"}
           </Button>
 
           {user ? (
             <>
-              {user.role === 'admin' && (
+              {user.role === "admin" && (
                 <Link href="/admin">
-                  <Button variant="ghost" size="sm" className="gap-2">
+                  <Button variant="ghost" size="sm" className="gap-2" data-testid="link-admin">
                     <LayoutDashboard className="w-4 h-4" />
                     {t("لوحة التحكم", "Dashboard")}
                   </Button>
                 </Link>
               )}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => logout()}
-                className="gap-2"
-              >
+              <Button variant="outline" size="sm" onClick={() => logout()} className="gap-2" data-testid="button-logout">
                 <LogOut className="w-4 h-4" />
                 {t("خروج", "Logout")}
               </Button>
             </>
           ) : (
-            <Link href="/login">
-              <Button size="sm" className="gap-2 shadow-sm">
-                <LogIn className="w-4 h-4" />
-                {t("دخول", "Login")}
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link href="/login">
+                <Button variant="ghost" size="sm" className="gap-2" data-testid="link-login">
+                  <LogIn className="w-4 h-4" />
+                  {t("دخول", "Login")}
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button size="sm" className="gap-2" data-testid="link-signup">
+                  <UserPlus className="w-4 h-4" />
+                  {t("حساب جديد", "Sign Up")}
+                </Button>
+              </Link>
+            </div>
           )}
 
-          <Button variant="ghost" size="icon" className="relative">
+          <Button variant="ghost" size="icon" className="relative" onClick={() => setCartOpen(true)} data-testid="button-cart">
             <ShoppingBag className="w-5 h-5 text-foreground" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full animate-pulse" />
+            {itemCount > 0 && (
+              <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs no-default-hover-elevate no-default-active-elevate" data-testid="badge-cart-count">
+                {itemCount}
+              </Badge>
+            )}
           </Button>
         </div>
 
-        {/* Mobile Menu */}
         <div className="md:hidden flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="relative" onClick={() => setCartOpen(true)} data-testid="button-cart-mobile">
+            <ShoppingBag className="w-5 h-5" />
+            {itemCount > 0 && (
+              <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs no-default-hover-elevate no-default-active-elevate">
+                {itemCount}
+              </Badge>
+            )}
+          </Button>
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" data-testid="button-mobile-menu">
                 <Menu className="w-6 h-6" />
               </Button>
             </SheetTrigger>
             <SheetContent side={language === "ar" ? "right" : "left"}>
               <div className="flex flex-col gap-6 mt-10">
                 {navLinks.map((link) => (
-                  <Link 
-                    key={link.href} 
-                    href={link.href} 
-                    className="text-lg font-medium hover:text-primary"
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="text-lg font-medium"
                     onClick={() => setIsOpen(false)}
                   >
                     {link.label}
                   </Link>
                 ))}
-                
                 <hr className="my-2" />
-
                 <div className="flex flex-col gap-3">
-                   <Button variant="outline" onClick={toggleLanguage}>
+                  <Button variant="outline" onClick={toggleLanguage}>
                     {language === "ar" ? "English" : "العربية"}
-                   </Button>
-
-                   {user ? (
+                  </Button>
+                  {user ? (
                     <>
-                      {user.role === 'admin' && (
+                      {user.role === "admin" && (
                         <Link href="/admin" onClick={() => setIsOpen(false)}>
                           <Button variant="secondary" className="w-full justify-start gap-2">
-                             <LayoutDashboard className="w-4 h-4" />
-                             {t("لوحة التحكم", "Dashboard")}
+                            <LayoutDashboard className="w-4 h-4" />
+                            {t("لوحة التحكم", "Dashboard")}
                           </Button>
                         </Link>
                       )}
@@ -142,14 +156,22 @@ export function Navbar() {
                         {t("خروج", "Logout")}
                       </Button>
                     </>
-                   ) : (
-                    <Link href="/login" onClick={() => setIsOpen(false)}>
-                      <Button className="w-full justify-start gap-2">
-                        <LogIn className="w-4 h-4" />
-                        {t("تسجيل الدخول", "Login")}
-                      </Button>
-                    </Link>
-                   )}
+                  ) : (
+                    <>
+                      <Link href="/login" onClick={() => setIsOpen(false)}>
+                        <Button variant="outline" className="w-full justify-start gap-2">
+                          <LogIn className="w-4 h-4" />
+                          {t("تسجيل الدخول", "Login")}
+                        </Button>
+                      </Link>
+                      <Link href="/signup" onClick={() => setIsOpen(false)}>
+                        <Button className="w-full justify-start gap-2">
+                          <UserPlus className="w-4 h-4" />
+                          {t("حساب جديد", "Sign Up")}
+                        </Button>
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             </SheetContent>

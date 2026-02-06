@@ -28,8 +28,8 @@ export default function Home() {
           </h1>
           <p className="text-lg md:text-xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto leading-relaxed">
             {t(
-              "مكتبة الوراق تقدم لك نخبة من أفضل الكتب العربية والعالمية. تصفح مجموعتنا المختارة بعناية.",
-              "Al-Warraq Bookstore offers you a selection of the best Arabic and international books. Browse our carefully curated collection."
+              "دار علي بن زيد للطباعة والنشر تقدم لك نخبة من أفضل الكتب العربية والعالمية. تصفح مجموعتنا المختارة بعناية.",
+              "Dar Ali BenZid for Printing & Publishing offers you a selection of the best Arabic and international books. Browse our carefully curated collection."
             )}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

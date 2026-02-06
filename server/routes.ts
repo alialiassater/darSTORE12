@@ -3,34 +3,56 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { api } from "@shared/routes";
+import { insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
-
 import passport from "passport";
+import type { User } from "@shared/schema";
+
+function requireAdmin(req: any, res: any, next: any) {
+  if (!req.isAuthenticated() || (req.user as User).role !== "admin") {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  next();
+}
+
+async function logAdminAction(req: any, action: string, entityType?: string, entityId?: number, details?: string) {
+  const user = req.user as User;
+  if (user) {
+    await storage.logActivity({
+      adminId: user.id,
+      adminEmail: user.email,
+      action,
+      entityType: entityType || null,
+      entityId: entityId || null,
+      details: details || null,
+    });
+  }
+}
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Setup Auth
   const { hashPassword } = setupAuth(app);
 
-  // === AUTH API ===
+  // === AUTH ===
   app.post(api.auth.register.path, async (req, res) => {
     try {
       const input = api.auth.register.input.parse(req.body);
       const existing = await storage.getUserByUsername(input.email);
       if (existing) {
-        return res.status(400).json({ message: "Username already exists" });
+        return res.status(400).json({ message: "Email already registered" });
       }
-
       const hashedPassword = await hashPassword(input.password);
       const user = await storage.createUser({
-        ...input,
+        email: input.email,
         password: hashedPassword,
+        role: "user",
+        name: input.name,
+        phone: input.phone || null,
       });
-      
       req.login(user, (err) => {
-        if (err) return res.status(500).json({ message: "Login failed" });
+        if (err) return res.status(500).json({ message: "Login failed after registration" });
         res.status(201).json(user);
       });
     } catch (err) {
@@ -43,15 +65,11 @@ export async function registerRoutes(
   });
 
   app.post(api.auth.login.path, (req, res, next) => {
-    // Basic validation
     const result = api.auth.login.input.safeParse(req.body);
-    if (!result.success) {
-       return res.status(400).json({ message: "Invalid input" });
-    }
+    if (!result.success) return res.status(400).json({ message: "Invalid input" });
     next();
   }, (req, res, next) => {
-    // Passport login
-    passport.authenticate("local", (err: any, user: any, info: any) => {
+    passport.authenticate("local", (err: any, user: any) => {
       if (err) return next(err);
       if (!user) return res.status(401).json({ message: "Invalid credentials" });
       req.login(user, (err) => {
@@ -76,14 +94,12 @@ export async function registerRoutes(
     }
   });
 
-
-  // === BOOKS API ===
-
+  // === BOOKS ===
   app.get(api.books.list.path, async (req, res) => {
     const category = req.query.category as string | undefined;
     const search = req.query.search as string | undefined;
-    const books = await storage.getBooks(category, search);
-    res.json(books);
+    const allBooks = await storage.getBooks(category, search);
+    res.json(allBooks);
   });
 
   app.get(api.books.get.path, async (req, res) => {
@@ -92,13 +108,11 @@ export async function registerRoutes(
     res.json(book);
   });
 
-  app.post(api.books.create.path, async (req, res) => {
-    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+  app.post(api.books.create.path, requireAdmin, async (req, res) => {
     try {
       const input = api.books.create.input.parse(req.body);
       const book = await storage.createBook(input);
+      await logAdminAction(req, "Created book", "book", book.id, `${input.titleEn}`);
       res.status(201).json(book);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -109,52 +123,182 @@ export async function registerRoutes(
     }
   });
 
-  app.put(api.books.update.path, async (req, res) => {
-    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+  app.put(api.books.update.path, requireAdmin, async (req, res) => {
     try {
       const input = api.books.update.input.parse(req.body);
       const updated = await storage.updateBook(Number(req.params.id), input);
+      await logAdminAction(req, "Updated book", "book", updated.id, `${updated.titleEn}`);
       res.json(updated);
     } catch (err) {
       res.status(400).json({ message: "Update failed" });
     }
   });
 
-  app.delete(api.books.delete.path, async (req, res) => {
-    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    await storage.deleteBook(Number(req.params.id));
+  app.delete(api.books.delete.path, requireAdmin, async (req, res) => {
+    const id = Number(req.params.id);
+    await storage.deleteBook(id);
+    await logAdminAction(req, "Deleted book", "book", id);
     res.status(204).send();
   });
 
-  // Seed Data
+  // === CATEGORIES ===
+  app.get(api.categories.list.path, async (_req, res) => {
+    const cats = await storage.getCategories();
+    res.json(cats);
+  });
+
+  app.post(api.categories.create.path, requireAdmin, async (req, res) => {
+    try {
+      const input = api.categories.create.input.parse(req.body);
+      const cat = await storage.createCategory(input);
+      await logAdminAction(req, "Created category", "category", cat.id, cat.nameEn);
+      res.status(201).json(cat);
+    } catch (err) {
+      res.status(400).json({ message: "Validation error" });
+    }
+  });
+
+  app.put(api.categories.update.path, requireAdmin, async (req, res) => {
+    try {
+      const input = api.categories.update.input.parse(req.body);
+      const cat = await storage.updateCategory(Number(req.params.id), input);
+      await logAdminAction(req, "Updated category", "category", cat.id, cat.nameEn);
+      res.json(cat);
+    } catch (err) {
+      res.status(400).json({ message: "Update failed" });
+    }
+  });
+
+  app.delete(api.categories.delete.path, requireAdmin, async (req, res) => {
+    const id = Number(req.params.id);
+    await storage.deleteCategory(id);
+    await logAdminAction(req, "Deleted category", "category", id);
+    res.status(204).send();
+  });
+
+  // === ORDERS ===
+  app.post(api.orders.create.path, async (req, res) => {
+    try {
+      const input = insertOrderSchema.parse(req.body);
+      const bookPrices: { bookId: number; quantity: number; unitPrice: number }[] = [];
+      let total = 0;
+
+      for (const item of input.items) {
+        const book = await storage.getBook(item.bookId);
+        if (!book) return res.status(400).json({ message: `Book not found: ${item.bookId}` });
+        const price = Number(book.price);
+        bookPrices.push({ bookId: item.bookId, quantity: item.quantity, unitPrice: price });
+        total += price * item.quantity;
+      }
+
+      const userId = req.isAuthenticated() ? (req.user as User).id : null;
+      const order = await storage.createOrder(userId, input.customerName, input.phone, input.address, input.city, input.notes, total, bookPrices);
+      res.status(201).json(order);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json({ message: err.errors[0].message });
+      } else {
+        console.error("Order creation error:", err);
+        res.status(500).json({ message: "Failed to create order" });
+      }
+    }
+  });
+
+  app.get(api.orders.list.path, async (req, res) => {
+    if (req.isAuthenticated() && (req.user as User).role === "admin") {
+      const allOrders = await storage.getOrders();
+      return res.json(allOrders);
+    }
+    if (req.isAuthenticated()) {
+      const userOrders = await storage.getUserOrders((req.user as User).id);
+      return res.json(userOrders);
+    }
+    return res.status(401).json({ message: "Login required" });
+  });
+
+  app.get(api.orders.get.path, async (req, res) => {
+    const order = await storage.getOrder(Number(req.params.id));
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    res.json(order);
+  });
+
+  app.put(api.orders.updateStatus.path, requireAdmin, async (req, res) => {
+    try {
+      const { status } = req.body;
+      const order = await storage.updateOrderStatus(Number(req.params.id), status);
+      await logAdminAction(req, `Updated order status to ${status}`, "order", order.id);
+      res.json(order);
+    } catch (err) {
+      res.status(400).json({ message: "Update failed" });
+    }
+  });
+
+  // === ADMIN ===
+  app.get(api.customers.list.path, requireAdmin, async (_req, res) => {
+    const allUsers = await storage.getUsers();
+    res.json(allUsers.map(u => ({ ...u, password: undefined })));
+  });
+
+  app.put(api.customers.update.path, requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const user = await storage.updateUser(id, req.body);
+      await logAdminAction(req, "Updated customer", "user", id, user.email);
+      res.json({ ...user, password: undefined });
+    } catch (err) {
+      res.status(400).json({ message: "Update failed" });
+    }
+  });
+
+  app.get(api.activity.list.path, requireAdmin, async (_req, res) => {
+    const logs = await storage.getActivityLogs(200);
+    res.json(logs);
+  });
+
+  app.get(api.stats.get.path, requireAdmin, async (_req, res) => {
+    const [totalBooks, totalOrders, totalCustomers, lowStockBooks, revenue] = await Promise.all([
+      storage.countBooks(),
+      storage.countOrders(),
+      storage.getUsers().then(u => u.filter(x => x.role === "user").length),
+      storage.countLowStockBooks(),
+      storage.totalRevenue(),
+    ]);
+    res.json({ totalBooks, totalOrders, totalCustomers, lowStockBooks, revenue });
+  });
+
+  // Seed
   await seedDatabase(hashPassword);
 
   return httpServer;
 }
 
 async function seedDatabase(hashPassword: (pwd: string) => Promise<string>) {
-  const users = await storage.getUserByUsername("admin@daralibenzid.com");
-  if (!users) {
+  const existing = await storage.getUserByUsername("admin@daralibenzid.com");
+  if (!existing) {
     console.log("Seeding database...");
     const adminPwd = await hashPassword("admin123");
     await storage.createUser({
       email: "admin@daralibenzid.com",
       password: adminPwd,
-      role: "admin"
+      role: "admin",
+      name: "Admin",
     });
 
     const userPwd = await hashPassword("user123");
     await storage.createUser({
       email: "user@example.com",
       password: userPwd,
-      role: "user"
+      role: "user",
+      name: "Test User",
     });
-    
-    // Seed Books
+
+    // Seed categories
+    await storage.createCategory({ nameAr: "تاريخ", nameEn: "History", slug: "history" });
+    await storage.createCategory({ nameAr: "أدب", nameEn: "Literature", slug: "literature" });
+    await storage.createCategory({ nameAr: "رواية", nameEn: "Fiction", slug: "fiction" });
+    await storage.createCategory({ nameAr: "دين", nameEn: "Religion", slug: "religion" });
+    await storage.createCategory({ nameAr: "علوم", nameEn: "Science", slug: "science" });
+
     await storage.createBook({
       titleAr: "مقدمة ابن خلدون",
       titleEn: "The Muqaddimah",
@@ -166,7 +310,8 @@ async function seedDatabase(hashPassword: (pwd: string) => Promise<string>) {
       image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800",
       language: "both",
       published: true,
-      isbn: "978-0691174954"
+      isbn: "978-0691174954",
+      stock: 15,
     });
 
     await storage.createBook({
@@ -180,12 +325,13 @@ async function seedDatabase(hashPassword: (pwd: string) => Promise<string>) {
       image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=800",
       language: "ar",
       published: true,
-      isbn: "978-1234567890"
+      isbn: "978-1234567890",
+      stock: 10,
     });
-    
-     await storage.createBook({
+
+    await storage.createBook({
       titleAr: "البؤساء",
-      titleEn: "Les Misérables",
+      titleEn: "Les Miserables",
       author: "Victor Hugo",
       descriptionAr: "رواية فرنسية تاريخية من تأليف فيكتور هوجو.",
       descriptionEn: "A French historical novel by Victor Hugo, considered one of the greatest novels of the 19th century.",
@@ -194,7 +340,8 @@ async function seedDatabase(hashPassword: (pwd: string) => Promise<string>) {
       image: "https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=800",
       language: "both",
       published: true,
-      isbn: "978-0451419439"
+      isbn: "978-0451419439",
+      stock: 8,
     });
   }
 }
