@@ -15,24 +15,24 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 30% 15%;
 
-    --primary: 154 50% 30%; /* Dark Green from logo */
+    --primary: 154 30% 25%; /* Refined Softer Dark Green */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 80% 50%; /* Red from logo banner */
+    --secondary: 200 70% 45%; /* Blue for primary actions */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 10% 95%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 220 15% 96%;
+    --muted-foreground: 220 10% 40%;
 
-    --accent: 200 80% 45%; /* Blue from logo globe */
+    --accent: 0 75% 55%; /* Refined Red for Prices/Badges only */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
-    --ring: 154 50% 30%;
+    --border: 220 10% 90%;
+    --input: 220 10% 90%;
+    --ring: 200 70% 45%; /* Blue for active states */
 
     --radius: 0.5rem;
   }
