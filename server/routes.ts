@@ -5,6 +5,8 @@ import { setupAuth } from "./auth";
 import { api } from "@shared/routes";
 import { z } from "zod";
 
+import passport from "passport";
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -49,18 +51,6 @@ export async function registerRoutes(
     next();
   }, (req, res, next) => {
     // Passport login
-    const passportLogin = (global as any).passport?.authenticate("local", (err: any, user: any, info: any) => {
-      if (err) return next(err);
-      if (!user) return res.status(401).json({ message: "Invalid credentials" });
-      req.login(user, (err) => {
-        if (err) return next(err);
-        res.status(200).json(user);
-      });
-    });
-    // Dynamically require passport if global doesn't work (it should if imported in auth.ts and auth.ts is imported here)
-    // Actually, we imported setupAuth which imports passport.
-    // Better way: use the import from auth.ts
-    const passport = require("passport");
     passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) return next(err);
       if (!user) return res.status(401).json({ message: "Invalid credentials" });
