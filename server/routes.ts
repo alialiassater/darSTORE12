@@ -7,6 +7,7 @@ import { insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
 import passport from "passport";
 import type { User } from "@shared/schema";
+import { algerianWilayas } from "@shared/algeria-data";
 
 function requireAdmin(req: any, res: any, next: any) {
   if (!req.isAuthenticated() || (req.user as User).role !== "admin") {
@@ -181,18 +182,27 @@ export async function registerRoutes(
     try {
       const input = insertOrderSchema.parse(req.body);
       const bookPrices: { bookId: number; quantity: number; unitPrice: number }[] = [];
-      let total = 0;
+      let subtotal = 0;
 
       for (const item of input.items) {
         const book = await storage.getBook(item.bookId);
         if (!book) return res.status(400).json({ message: `Book not found: ${item.bookId}` });
         const price = Number(book.price);
         bookPrices.push({ bookId: item.bookId, quantity: item.quantity, unitPrice: price });
-        total += price * item.quantity;
+        subtotal += price * item.quantity;
       }
 
+      let shippingPrice = 0;
+      if (input.wilayaCode) {
+        const wilaya = await storage.getWilayaByCode(input.wilayaCode);
+        if (wilaya && wilaya.isActive) {
+          shippingPrice = Number(wilaya.shippingPrice);
+        }
+      }
+
+      const total = subtotal + shippingPrice;
       const userId = req.isAuthenticated() ? (req.user as User).id : null;
-      const order = await storage.createOrder(userId, input.customerName, input.phone, input.address, input.city, input.notes, total, bookPrices);
+      const order = await storage.createOrder(userId, input.customerName, input.phone, input.address, input.city, input.notes, total, bookPrices, input.wilayaCode, input.wilayaName, input.baladiya, shippingPrice);
       res.status(201).json(order);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -311,6 +321,49 @@ export async function registerRoutes(
     }
   });
 
+  // === SHIPPING / WILAYAS ===
+  app.get(api.shipping.list.path, async (req, res) => {
+    const activeOnly = req.query?.active === "true";
+    const allWilayas = activeOnly ? await storage.getActiveWilayas() : await storage.getWilayas();
+    res.json(allWilayas);
+  });
+
+  app.get(api.shipping.get.path, async (req, res) => {
+    const w = await storage.getWilayaByCode(Number(req.params.code));
+    if (!w) return res.status(404).json({ message: "Wilaya not found" });
+    res.json(w);
+  });
+
+  app.put(api.shipping.update.path, requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const updates: any = {};
+      if (req.body.shippingPrice !== undefined) updates.shippingPrice = req.body.shippingPrice;
+      if (req.body.isActive !== undefined) updates.isActive = req.body.isActive;
+      const w = await storage.updateWilaya(id, updates);
+      await logAdminAction(req, "Updated shipping", "wilaya", w.id, `${w.nameEn}: ${w.shippingPrice} DZD`);
+      res.json(w);
+    } catch (err) {
+      res.status(400).json({ message: "Update failed" });
+    }
+  });
+
+  app.put(api.shipping.bulkUpdate.path, requireAdmin, async (req, res) => {
+    try {
+      const { defaultPrice } = req.body;
+      const allWilayas = await storage.getWilayas();
+      let count = 0;
+      for (const w of allWilayas) {
+        await storage.updateWilaya(w.id, { shippingPrice: defaultPrice });
+        count++;
+      }
+      await logAdminAction(req, `Set default shipping price to ${defaultPrice} DZD`, "shipping");
+      res.json({ updated: count });
+    } catch (err) {
+      res.status(400).json({ message: "Bulk update failed" });
+    }
+  });
+
   app.get(api.activity.list.path, requireAdmin, async (_req, res) => {
     const logs = await storage.getActivityLogs(200);
     res.json(logs);
@@ -329,8 +382,26 @@ export async function registerRoutes(
 
   // Seed
   await seedDatabase(hashPassword);
+  await seedWilayas();
 
   return httpServer;
+}
+
+async function seedWilayas() {
+  const count = await storage.countWilayas();
+  if (count === 0) {
+    console.log("Seeding wilayas...");
+    for (const w of algerianWilayas) {
+      await storage.createWilaya({
+        code: w.code,
+        nameAr: w.nameAr,
+        nameEn: w.nameEn,
+        shippingPrice: String(w.defaultPrice),
+        isActive: true,
+      });
+    }
+    console.log(`Seeded ${algerianWilayas.length} wilayas.`);
+  }
 }
 
 async function seedDatabase(hashPassword: (pwd: string) => Promise<string>) {

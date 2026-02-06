@@ -29,7 +29,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus, Pencil, Trash2, Loader2, Image as ImageIcon,
   BookOpen, Package, Users, Activity, BarChart3, Tag, Eye,
-  ShoppingBag, UserPlus, UserX, ToggleLeft, ToggleRight, History
+  ShoppingBag, UserPlus, UserX, ToggleLeft, ToggleRight, History,
+  MapPin, Truck, Save, Check, X
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -65,6 +66,7 @@ export default function Admin() {
           <TabsTrigger value="categories" className="gap-2" data-testid="tab-categories"><Tag className="w-4 h-4" />{t("التصنيفات", "Categories")}</TabsTrigger>
           <TabsTrigger value="orders" className="gap-2" data-testid="tab-orders"><Package className="w-4 h-4" />{t("الطلبات", "Orders")}</TabsTrigger>
           <TabsTrigger value="customers" className="gap-2" data-testid="tab-customers"><Users className="w-4 h-4" />{t("العملاء", "Customers")}</TabsTrigger>
+          <TabsTrigger value="shipping" className="gap-2" data-testid="tab-shipping"><Truck className="w-4 h-4" />{t("الشحن", "Shipping")}</TabsTrigger>
           <TabsTrigger value="activity" className="gap-2" data-testid="tab-activity"><Activity className="w-4 h-4" />{t("السجل", "Activity")}</TabsTrigger>
         </TabsList>
 
@@ -73,6 +75,7 @@ export default function Admin() {
         <TabsContent value="categories"><CategoriesTab /></TabsContent>
         <TabsContent value="orders"><OrdersTab /></TabsContent>
         <TabsContent value="customers"><CustomersTab /></TabsContent>
+        <TabsContent value="shipping"><ShippingTab /></TabsContent>
         <TabsContent value="activity"><ActivityTab /></TabsContent>
       </Tabs>
     </div>
@@ -548,8 +551,8 @@ function OrdersTab() {
                   <p className="font-medium">{detailOrder.phone}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs">{t("المدينة", "City")}</p>
-                  <p className="font-medium">{detailOrder.city}</p>
+                  <p className="text-muted-foreground text-xs">{t("الولاية", "Wilaya")}</p>
+                  <p className="font-medium">{detailOrder.wilayaName || detailOrder.city}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">{t("الحالة", "Status")}</p>
@@ -557,6 +560,12 @@ function OrdersTab() {
                     {language === "ar" ? statusLabels[detailOrder.status]?.ar : statusLabels[detailOrder.status]?.en}
                   </span>
                 </div>
+                {detailOrder.baladiya && (
+                  <div>
+                    <p className="text-muted-foreground text-xs">{t("البلدية", "Baladiya")}</p>
+                    <p className="font-medium">{detailOrder.baladiya}</p>
+                  </div>
+                )}
                 <div className="col-span-2">
                   <p className="text-muted-foreground text-xs">{t("العنوان", "Address")}</p>
                   <p className="font-medium">{detailOrder.address}</p>
@@ -588,7 +597,13 @@ function OrdersTab() {
                     </div>
                   ))}
                 </div>
-                <div className="flex justify-between items-center mt-3 pt-3 border-t font-bold">
+                {detailOrder.shippingPrice && Number(detailOrder.shippingPrice) > 0 && (
+                  <div className="flex justify-between items-center mt-3 pt-3 border-t text-sm">
+                    <span className="text-muted-foreground flex items-center gap-1"><Truck className="w-3 h-3" /> {t("الشحن", "Shipping")}</span>
+                    <span>{Number(detailOrder.shippingPrice).toLocaleString()} DZD</span>
+                  </div>
+                )}
+                <div className={`flex justify-between items-center font-bold ${detailOrder.shippingPrice && Number(detailOrder.shippingPrice) > 0 ? "mt-1" : "mt-3 pt-3 border-t"}`}>
                   <span>{t("الإجمالي", "Total")}</span>
                   <span className="text-primary text-lg">{Number(detailOrder.total).toLocaleString()} DZD</span>
                 </div>
@@ -874,6 +889,190 @@ function CustomersTab() {
           )}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function ShippingTab() {
+  const { t, language } = useLanguage();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { data: wilayasList, isLoading } = useQuery<any[]>({ queryKey: ["/api/shipping/wilayas"] });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editPrice, setEditPrice] = useState("");
+  const [defaultPrice, setDefaultPrice] = useState("");
+
+  const updateWilaya = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const res = await apiRequest("PUT", `/api/admin/shipping/wilayas/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shipping/wilayas"] });
+      setEditingId(null);
+      toast({ title: t("تم التحديث", "Updated") });
+    },
+  });
+
+  const bulkUpdate = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("PUT", "/api/admin/shipping/wilayas", { defaultPrice });
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shipping/wilayas"] });
+      setDefaultPrice("");
+      toast({ title: t(`تم تحديث ${data.updated} ولاية`, `Updated ${data.updated} wilayas`) });
+    },
+  });
+
+  const filtered = (wilayasList || []).filter((w: any) => {
+    if (!searchTerm) return true;
+    const s = searchTerm.toLowerCase();
+    return w.nameAr.includes(s) || w.nameEn.toLowerCase().includes(s) || String(w.code).includes(s);
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h2 className="text-xl font-bold flex items-center gap-2">
+          <Truck className="w-5 h-5" />
+          {t("إدارة الشحن", "Shipping Management")}
+        </h2>
+      </div>
+
+      <Card>
+        <CardContent className="p-4 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3 items-end">
+            <div className="flex-1">
+              <label className="text-sm font-medium mb-1 block">{t("السعر الافتراضي لجميع الولايات", "Default price for all wilayas")}</label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  placeholder={t("السعر (د.ج)", "Price (DZD)")}
+                  value={defaultPrice}
+                  onChange={(e) => setDefaultPrice(e.target.value)}
+                  data-testid="input-default-shipping-price"
+                />
+                <Button
+                  onClick={() => bulkUpdate.mutate()}
+                  disabled={!defaultPrice || bulkUpdate.isPending}
+                  data-testid="button-apply-default-price"
+                >
+                  {bulkUpdate.isPending ? <Loader2 className="animate-spin" /> : t("تطبيق", "Apply")}
+                </Button>
+              </div>
+            </div>
+            <div className="flex-1">
+              <label className="text-sm font-medium mb-1 block">{t("بحث عن ولاية", "Search wilaya")}</label>
+              <Input
+                placeholder={t("بحث...", "Search...")}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                data-testid="input-search-wilaya"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="overflow-hidden">
+        <Table>
+          <TableHeader className="bg-muted/50">
+            <TableRow>
+              <TableHead className="w-16">{t("الرمز", "Code")}</TableHead>
+              <TableHead>{t("الولاية (عربي)", "Wilaya (AR)")}</TableHead>
+              <TableHead>{t("الولاية (إنجليزي)", "Wilaya (EN)")}</TableHead>
+              <TableHead>{t("سعر الشحن (د.ج)", "Shipping (DZD)")}</TableHead>
+              <TableHead className="w-24">{t("الحالة", "Status")}</TableHead>
+              <TableHead className="w-24">{t("إجراءات", "Actions")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow><TableCell colSpan={6} className="text-center py-10"><Loader2 className="animate-spin w-8 h-8 mx-auto" /></TableCell></TableRow>
+            ) : filtered.length === 0 ? (
+              <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">{t("لا توجد ولايات", "No wilayas found")}</TableCell></TableRow>
+            ) : filtered.map((w: any) => (
+              <TableRow key={w.id} data-testid={`row-wilaya-${w.id}`}>
+                <TableCell className="font-mono font-bold">{w.code}</TableCell>
+                <TableCell>{w.nameAr}</TableCell>
+                <TableCell>{w.nameEn}</TableCell>
+                <TableCell>
+                  {editingId === w.id ? (
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        className="w-24"
+                        value={editPrice}
+                        onChange={(e) => setEditPrice(e.target.value)}
+                        data-testid={`input-price-${w.id}`}
+                      />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                          updateWilaya.mutate({ id: w.id, data: { shippingPrice: editPrice } });
+                        }}
+                        disabled={updateWilaya.isPending}
+                        data-testid={`button-save-price-${w.id}`}
+                      >
+                        <Check className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setEditingId(null)}
+                        data-testid={`button-cancel-price-${w.id}`}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <span
+                      className="cursor-pointer hover-elevate px-2 py-1 rounded-md font-medium"
+                      onClick={() => { setEditingId(w.id); setEditPrice(w.shippingPrice); }}
+                      data-testid={`text-price-${w.id}`}
+                    >
+                      {Number(w.shippingPrice).toLocaleString()} {t("د.ج", "DZD")}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => {
+                      updateWilaya.mutate({ id: w.id, data: { isActive: !w.isActive } });
+                    }}
+                    data-testid={`button-toggle-wilaya-${w.id}`}
+                  >
+                    {w.isActive ? <ToggleRight className="w-5 h-5 text-green-600" /> : <ToggleLeft className="w-5 h-5 text-muted-foreground" />}
+                  </Button>
+                </TableCell>
+                <TableCell>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => { setEditingId(w.id); setEditPrice(w.shippingPrice); }}
+                    data-testid={`button-edit-wilaya-${w.id}`}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <p className="text-sm text-muted-foreground text-center">
+        {t(
+          `${filtered.length} ولاية${filtered.length !== (wilayasList || []).length ? ` من ${(wilayasList || []).length}` : ""}`,
+          `${filtered.length} wilaya${filtered.length !== (wilayasList || []).length ? ` of ${(wilayasList || []).length}` : ""}`
+        )}
+      </p>
     </div>
   );
 }

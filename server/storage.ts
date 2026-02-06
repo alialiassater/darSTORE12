@@ -1,10 +1,11 @@
 import { db } from "./db";
 import {
-  users, books, categories, orders, orderItems, activityLogs,
+  users, books, categories, orders, orderItems, activityLogs, wilayas,
   type User, type InsertUser,
   type Book, type InsertBook, type UpdateBookRequest,
   type Category, type InsertCategory,
   type Order, type OrderItem, type OrderWithItems,
+  type Wilaya, type InsertWilaya,
   type ActivityLog, type InsertActivityLog
 } from "@shared/schema";
 import { eq, desc, sql } from "drizzle-orm";
@@ -37,7 +38,15 @@ export interface IStorage {
   updateCategory(id: number, updates: Partial<InsertCategory>): Promise<Category>;
   deleteCategory(id: number): Promise<void>;
 
-  createOrder(userId: number | null, customerName: string, phone: string, address: string, city: string, notes: string | undefined, total: number, items: { bookId: number; quantity: number; unitPrice: number }[]): Promise<OrderWithItems>;
+  getWilayas(): Promise<Wilaya[]>;
+  getActiveWilayas(): Promise<Wilaya[]>;
+  getWilayaByCode(code: number): Promise<Wilaya | undefined>;
+  getWilaya(id: number): Promise<Wilaya | undefined>;
+  createWilaya(w: InsertWilaya): Promise<Wilaya>;
+  updateWilaya(id: number, updates: Partial<Wilaya>): Promise<Wilaya>;
+  countWilayas(): Promise<number>;
+
+  createOrder(userId: number | null, customerName: string, phone: string, address: string, city: string, notes: string | undefined, total: number, items: { bookId: number; quantity: number; unitPrice: number }[], wilayaCode?: number, wilayaName?: string, baladiya?: string, shippingPrice?: number): Promise<OrderWithItems>;
   getOrders(): Promise<OrderWithItems[]>;
   getOrder(id: number): Promise<OrderWithItems | undefined>;
   getUserOrders(userId: number): Promise<OrderWithItems[]>;
@@ -150,9 +159,46 @@ export class DatabaseStorage implements IStorage {
     await db.delete(categories).where(eq(categories.id, id));
   }
 
-  async createOrder(userId: number | null, customerName: string, phone: string, address: string, city: string, notes: string | undefined, total: number, items: { bookId: number; quantity: number; unitPrice: number }[]): Promise<OrderWithItems> {
+  async getWilayas(): Promise<Wilaya[]> {
+    return db.select().from(wilayas).orderBy(wilayas.code);
+  }
+
+  async getActiveWilayas(): Promise<Wilaya[]> {
+    return db.select().from(wilayas).where(eq(wilayas.isActive, true)).orderBy(wilayas.code);
+  }
+
+  async getWilayaByCode(code: number): Promise<Wilaya | undefined> {
+    const [w] = await db.select().from(wilayas).where(eq(wilayas.code, code));
+    return w;
+  }
+
+  async getWilaya(id: number): Promise<Wilaya | undefined> {
+    const [w] = await db.select().from(wilayas).where(eq(wilayas.id, id));
+    return w;
+  }
+
+  async createWilaya(w: InsertWilaya): Promise<Wilaya> {
+    const [created] = await db.insert(wilayas).values(w).returning();
+    return created;
+  }
+
+  async updateWilaya(id: number, updates: Partial<Wilaya>): Promise<Wilaya> {
+    const [updated] = await db.update(wilayas).set(updates).where(eq(wilayas.id, id)).returning();
+    return updated;
+  }
+
+  async countWilayas(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)::int` }).from(wilayas);
+    return result[0]?.count ?? 0;
+  }
+
+  async createOrder(userId: number | null, customerName: string, phone: string, address: string, city: string, notes: string | undefined, total: number, items: { bookId: number; quantity: number; unitPrice: number }[], wilayaCode?: number, wilayaName?: string, baladiya?: string, shippingPrice?: number): Promise<OrderWithItems> {
     const [order] = await db.insert(orders).values({
-      userId, customerName, phone, address, city, notes, total: String(total), status: "pending"
+      userId, customerName, phone, address, city, notes, total: String(total), status: "pending",
+      wilayaCode: wilayaCode || null,
+      wilayaName: wilayaName || null,
+      baladiya: baladiya || null,
+      shippingPrice: shippingPrice != null ? String(shippingPrice) : null,
     }).returning();
 
     const insertedItems: OrderItem[] = [];

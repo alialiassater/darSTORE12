@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertBookSchema, insertCategorySchema, insertOrderSchema, registerUserSchema, books, users, categories, orders, orderItems, activityLogs } from './schema';
+import { insertBookSchema, insertCategorySchema, insertOrderSchema, registerUserSchema, books, users, categories, orders, orderItems, activityLogs, wilayas } from './schema';
 
 export const errorSchemas = {
   validation: z.object({ message: z.string(), field: z.string().optional() }),
@@ -148,6 +148,30 @@ export const api = {
       method: 'GET' as const,
       path: '/api/admin/customers/:id/orders',
       responses: { 200: z.array(z.any()), 404: errorSchemas.notFound, 401: errorSchemas.unauthorized },
+    },
+  },
+  shipping: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/shipping/wilayas',
+      responses: { 200: z.array(z.custom<typeof wilayas.$inferSelect>()) },
+    },
+    get: {
+      method: 'GET' as const,
+      path: '/api/shipping/wilayas/:code',
+      responses: { 200: z.custom<typeof wilayas.$inferSelect>(), 404: errorSchemas.notFound },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/admin/shipping/wilayas/:id',
+      input: z.object({ shippingPrice: z.string().optional(), isActive: z.boolean().optional() }),
+      responses: { 200: z.custom<typeof wilayas.$inferSelect>(), 404: errorSchemas.notFound, 401: errorSchemas.unauthorized },
+    },
+    bulkUpdate: {
+      method: 'PUT' as const,
+      path: '/api/admin/shipping/wilayas',
+      input: z.object({ defaultPrice: z.string() }),
+      responses: { 200: z.object({ updated: z.number() }), 401: errorSchemas.unauthorized },
     },
   },
   activity: {

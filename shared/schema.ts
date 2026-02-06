@@ -40,6 +40,15 @@ export const books = pgTable("books", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const wilayas = pgTable("wilayas", {
+  id: serial("id").primaryKey(),
+  code: integer("code").notNull().unique(),
+  nameAr: text("name_ar").notNull(),
+  nameEn: text("name_en").notNull(),
+  shippingPrice: numeric("shipping_price").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+});
+
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   userId: integer("user_id"),
@@ -47,6 +56,10 @@ export const orders = pgTable("orders", {
   phone: text("phone").notNull(),
   address: text("address").notNull(),
   city: text("city").notNull(),
+  wilayaCode: integer("wilaya_code"),
+  wilayaName: text("wilaya_name"),
+  baladiya: text("baladiya"),
+  shippingPrice: numeric("shipping_price"),
   status: text("status").default("pending").notNull(),
   total: numeric("total").notNull(),
   notes: text("notes"),
@@ -100,11 +113,18 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
 });
 
+export const insertWilayaSchema = createInsertSchema(wilayas).omit({
+  id: true,
+});
+
 export const insertOrderSchema = z.object({
   customerName: z.string().min(2),
   phone: z.string().min(8),
   address: z.string().min(5),
   city: z.string().min(2),
+  wilayaCode: z.number().optional(),
+  wilayaName: z.string().optional(),
+  baladiya: z.string().optional(),
   notes: z.string().optional(),
   items: z.array(z.object({
     bookId: z.number(),
@@ -128,6 +148,9 @@ export type InsertBook = z.infer<typeof insertBookSchema>;
 
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
+
+export type Wilaya = typeof wilayas.$inferSelect;
+export type InsertWilaya = z.infer<typeof insertWilayaSchema>;
 
 export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;

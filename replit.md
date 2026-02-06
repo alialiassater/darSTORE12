@@ -56,6 +56,10 @@ The project follows a monorepo pattern with three top-level directories:
 - `GET /api/user` — Get current authenticated user
 - `POST /api/register` — Create new user account
 - CRUD endpoints for books (list, get, create, update, delete)
+- `GET /api/shipping/wilayas` — List all wilayas with shipping prices
+- `PUT /api/admin/shipping/wilayas/:id` — Update wilaya shipping price or active status
+- `PUT /api/admin/shipping/wilayas` — Bulk update all wilayas with default price
+- CRUD endpoints for orders, categories, customers (admin)
 
 ### Database
 
@@ -65,8 +69,12 @@ The project follows a monorepo pattern with three top-level directories:
 - **Migrations**: Managed via `drizzle-kit push` (schema push approach, not migration files)
 
 **Tables**:
-- `users` — id, email (unique, acts as username), password (hashed), role ('admin'|'user'), createdAt
-- `books` — id, titleAr, titleEn, author, descriptionAr, descriptionEn, price (DZD currency), category, image (URL), language ('ar'|'en'|'both'), published (boolean), isbn, createdAt
+- `users` — id, email (unique, acts as username), password (hashed), role ('admin'|'user'), name, phone, address, city, enabled, createdAt
+- `books` — id, titleAr, titleEn, author, descriptionAr, descriptionEn, price (DZD currency), category, image (URL), language ('ar'|'en'|'both'), published (boolean), isbn, stock, createdAt
+- `wilayas` — id, code (unique), nameAr, nameEn, shippingPrice (DZD), isActive
+- `orders` — id, userId, customerName, phone, address, city, wilayaCode, wilayaName, baladiya, shippingPrice, status, total, notes, createdAt
+- `order_items` — id, orderId, bookId, quantity, unitPrice
+- `activity_logs` — id, adminId, adminEmail, action, entityType, entityId, details, createdAt
 
 ### Shared Contract Layer (`shared/`)
 
