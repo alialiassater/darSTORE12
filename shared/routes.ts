@@ -110,6 +110,11 @@ export const api = {
       input: z.object({ status: z.string() }),
       responses: { 200: z.any(), 404: errorSchemas.notFound, 401: errorSchemas.unauthorized },
     },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/orders/:id',
+      responses: { 204: z.void(), 404: errorSchemas.notFound, 401: errorSchemas.unauthorized },
+    },
   },
   customers: {
     list: {
@@ -117,11 +122,32 @@ export const api = {
       path: '/api/admin/customers',
       responses: { 200: z.array(z.custom<typeof users.$inferSelect>()) },
     },
+    get: {
+      method: 'GET' as const,
+      path: '/api/admin/customers/:id',
+      responses: { 200: z.any(), 404: errorSchemas.notFound, 401: errorSchemas.unauthorized },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/admin/customers',
+      input: z.object({ email: z.string().email(), password: z.string().min(6), name: z.string().min(2), phone: z.string().optional(), address: z.string().optional(), city: z.string().optional() }),
+      responses: { 201: z.custom<typeof users.$inferSelect>(), 400: errorSchemas.validation, 401: errorSchemas.unauthorized },
+    },
     update: {
       method: 'PUT' as const,
       path: '/api/admin/customers/:id',
-      input: z.object({ enabled: z.boolean().optional(), role: z.string().optional(), name: z.string().optional() }),
+      input: z.object({ enabled: z.boolean().optional(), role: z.string().optional(), name: z.string().optional(), phone: z.string().optional(), address: z.string().optional(), city: z.string().optional(), email: z.string().optional() }),
       responses: { 200: z.custom<typeof users.$inferSelect>(), 404: errorSchemas.notFound, 401: errorSchemas.unauthorized },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/admin/customers/:id',
+      responses: { 204: z.void(), 404: errorSchemas.notFound, 401: errorSchemas.unauthorized },
+    },
+    orders: {
+      method: 'GET' as const,
+      path: '/api/admin/customers/:id/orders',
+      responses: { 200: z.array(z.any()), 404: errorSchemas.notFound, 401: errorSchemas.unauthorized },
     },
   },
   activity: {

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
+import { setupAuth, hashPassword } from "./auth";
 import { api } from "@shared/routes";
 import { insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
@@ -233,20 +233,81 @@ export async function registerRoutes(
     }
   });
 
-  // === ADMIN ===
+  app.delete(api.orders.delete.path, requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const order = await storage.getOrder(id);
+      if (!order) return res.status(404).json({ message: "Order not found" });
+      await storage.deleteOrder(id);
+      await logAdminAction(req, "Deleted order", "order", id, order.customerName);
+      res.status(204).send();
+    } catch (err) {
+      res.status(400).json({ message: "Delete failed" });
+    }
+  });
+
+  // === ADMIN CUSTOMERS ===
   app.get(api.customers.list.path, requireAdmin, async (_req, res) => {
     const allUsers = await storage.getUsers();
     res.json(allUsers.map(u => ({ ...u, password: undefined })));
   });
 
+  app.get(api.customers.get.path, requireAdmin, async (req, res) => {
+    const id = Number(req.params.id);
+    const user = await storage.getUser(id);
+    if (!user) return res.status(404).json({ message: "Customer not found" });
+    res.json({ ...user, password: undefined });
+  });
+
+  app.get(api.customers.orders.path, requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const user = await storage.getUser(id);
+      if (!user) return res.status(404).json({ message: "Customer not found" });
+      const userOrders = await storage.getUserOrders(id);
+      res.json(userOrders);
+    } catch (err) {
+      res.status(400).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  app.post(api.customers.create.path, requireAdmin, async (req, res) => {
+    try {
+      const { email, password, name, phone, address, city } = req.body;
+      const existing = await storage.getUserByUsername(email);
+      if (existing) return res.status(400).json({ message: "Email already in use" });
+      const hashedPassword = await hashPassword(password);
+      const user = await storage.createUser({ email, password: hashedPassword, name, phone, address, city, role: "user" });
+      await logAdminAction(req, "Created customer", "user", user.id, user.email);
+      res.status(201).json({ ...user, password: undefined });
+    } catch (err) {
+      res.status(400).json({ message: "Creation failed" });
+    }
+  });
+
   app.put(api.customers.update.path, requireAdmin, async (req, res) => {
     try {
       const id = Number(req.params.id);
-      const user = await storage.updateUser(id, req.body);
+      const { password, ...safeUpdates } = req.body;
+      const user = await storage.updateUser(id, safeUpdates);
       await logAdminAction(req, "Updated customer", "user", id, user.email);
       res.json({ ...user, password: undefined });
     } catch (err) {
       res.status(400).json({ message: "Update failed" });
+    }
+  });
+
+  app.delete(api.customers.delete.path, requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const user = await storage.getUser(id);
+      if (!user) return res.status(404).json({ message: "Customer not found" });
+      if (user.role === "admin") return res.status(400).json({ message: "Cannot delete admin users" });
+      await storage.deleteUser(id);
+      await logAdminAction(req, "Deleted customer", "user", id, user.email);
+      res.status(204).send();
+    } catch (err) {
+      res.status(400).json({ message: "Delete failed" });
     }
   });
 

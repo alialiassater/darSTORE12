@@ -28,7 +28,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus, Pencil, Trash2, Loader2, Image as ImageIcon,
-  BookOpen, Package, Users, Activity, BarChart3, Tag, Eye
+  BookOpen, Package, Users, Activity, BarChart3, Tag, Eye,
+  ShoppingBag, UserPlus, UserX, ToggleLeft, ToggleRight, History
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -404,6 +405,7 @@ function OrdersTab() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data: orders, isLoading } = useQuery({ queryKey: ["/api/orders"] });
+  const [detailOrder, setDetailOrder] = useState<any>(null);
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
@@ -416,12 +418,23 @@ function OrdersTab() {
     },
   });
 
+  const deleteOrder = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/orders/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      toast({ title: t("تم حذف الطلب", "Order deleted") });
+    },
+  });
+
   const statusColors: Record<string, string> = {
-    pending: "bg-yellow-100 text-yellow-800",
-    confirmed: "bg-blue-100 text-blue-800",
-    shipped: "bg-purple-100 text-purple-800",
-    delivered: "bg-green-100 text-green-800",
-    cancelled: "bg-red-100 text-red-800",
+    pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+    confirmed: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+    shipped: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+    delivered: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+    cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
   };
 
   const statusLabels: Record<string, { ar: string; en: string }> = {
@@ -445,14 +458,14 @@ function OrdersTab() {
               <TableHead className="hidden md:table-cell">{t("المدينة", "City")}</TableHead>
               <TableHead>{t("المجموع", "Total")}</TableHead>
               <TableHead>{t("الحالة", "Status")}</TableHead>
-              <TableHead className="text-end">{t("تغيير الحالة", "Change")}</TableHead>
+              <TableHead className="text-end">{t("إجراءات", "Actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow><TableCell colSpan={7} className="text-center py-10"><Loader2 className="animate-spin w-8 h-8 mx-auto" /></TableCell></TableRow>
             ) : (orders as any[])?.map((order: any) => (
-              <TableRow key={order.id}>
+              <TableRow key={order.id} data-testid={`row-order-${order.id}`}>
                 <TableCell className="font-mono text-sm">{order.id}</TableCell>
                 <TableCell>
                   <div className="flex flex-col">
@@ -469,16 +482,45 @@ function OrdersTab() {
                   </span>
                 </TableCell>
                 <TableCell className="text-end">
-                  <Select value={order.status} onValueChange={(status) => updateStatus.mutate({ id: order.id, status })}>
-                    <SelectTrigger className="w-[130px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(statusLabels).map(([key, labels]) => (
-                        <SelectItem key={key} value={key}>{language === "ar" ? labels.ar : labels.en}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center justify-end gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => setDetailOrder(order)} data-testid={`button-view-order-${order.id}`}>
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Select value={order.status} onValueChange={(status) => updateStatus.mutate({ id: order.id, status })}>
+                      <SelectTrigger className="w-[120px]" data-testid={`select-status-order-${order.id}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(statusLabels).map(([key, labels]) => (
+                          <SelectItem key={key} value={key}>{language === "ar" ? labels.ar : labels.en}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-destructive" data-testid={`button-delete-order-${order.id}`}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t("تأكيد حذف الطلب", "Confirm Order Deletion")}</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {t(
+                              `هل أنت متأكد من حذف الطلب رقم ${order.id} للعميل "${order.customerName}"؟ سيتم حذف الطلب نهائياً ولا يمكن التراجع.`,
+                              `Are you sure you want to permanently delete order #${order.id} for "${order.customerName}"? This action cannot be undone.`
+                            )}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t("إلغاء", "Cancel")}</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deleteOrder.mutate(order.id)} className="bg-destructive text-destructive-foreground" data-testid={`button-confirm-delete-order-${order.id}`}>
+                            {t("حذف نهائي", "Delete Permanently")}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -488,17 +530,204 @@ function OrdersTab() {
           </TableBody>
         </Table>
       </Card>
+
+      <Dialog open={!!detailOrder} onOpenChange={(open) => { if (!open) setDetailOrder(null); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t("تفاصيل الطلب", "Order Details")} #{detailOrder?.id}</DialogTitle>
+          </DialogHeader>
+          {detailOrder && (
+            <div className="space-y-4 mt-2">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-muted-foreground text-xs">{t("العميل", "Customer")}</p>
+                  <p className="font-medium">{detailOrder.customerName}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">{t("الهاتف", "Phone")}</p>
+                  <p className="font-medium">{detailOrder.phone}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">{t("المدينة", "City")}</p>
+                  <p className="font-medium">{detailOrder.city}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">{t("الحالة", "Status")}</p>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[detailOrder.status] || ""}`}>
+                    {language === "ar" ? statusLabels[detailOrder.status]?.ar : statusLabels[detailOrder.status]?.en}
+                  </span>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-muted-foreground text-xs">{t("العنوان", "Address")}</p>
+                  <p className="font-medium">{detailOrder.address}</p>
+                </div>
+                {detailOrder.notes && (
+                  <div className="col-span-2">
+                    <p className="text-muted-foreground text-xs">{t("ملاحظات", "Notes")}</p>
+                    <p className="text-sm">{detailOrder.notes}</p>
+                  </div>
+                )}
+                <div className="col-span-2">
+                  <p className="text-muted-foreground text-xs">{t("تاريخ الطلب", "Order Date")}</p>
+                  <p className="font-medium">{detailOrder.createdAt ? new Date(detailOrder.createdAt).toLocaleDateString(language === "ar" ? "ar-DZ" : "en-US", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "-"}</p>
+                </div>
+              </div>
+              <div className="border-t pt-3">
+                <p className="font-bold text-sm mb-2">{t("المنتجات", "Items")}</p>
+                <div className="space-y-2">
+                  {detailOrder.items?.map((item: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between gap-2 p-2 bg-muted/50 rounded-md text-sm">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {item.book?.image && <img src={item.book.image} alt="" className="w-8 h-10 object-cover rounded bg-muted shrink-0" />}
+                        <div className="min-w-0">
+                          <p className="font-medium line-clamp-1">{item.book?.titleAr || item.book?.titleEn || `Book #${item.bookId}`}</p>
+                          <p className="text-xs text-muted-foreground">{Number(item.unitPrice).toLocaleString()} DZD x {item.quantity}</p>
+                        </div>
+                      </div>
+                      <p className="font-bold shrink-0">{(Number(item.unitPrice) * item.quantity).toLocaleString()} DZD</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-between items-center mt-3 pt-3 border-t font-bold">
+                  <span>{t("الإجمالي", "Total")}</span>
+                  <span className="text-primary text-lg">{Number(detailOrder.total).toLocaleString()} DZD</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
 function CustomersTab() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { data: customers, isLoading } = useQuery({ queryKey: ["/api/admin/customers"] });
+  const [addOpen, setAddOpen] = useState(false);
+  const [editCustomer, setEditCustomer] = useState<any>(null);
+  const [historyCustomer, setHistoryCustomer] = useState<any>(null);
+  const [customerOrders, setCustomerOrders] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  const addForm = useForm({
+    defaultValues: { email: "", password: "", name: "", phone: "", address: "", city: "" },
+  });
+
+  const editForm = useForm({
+    defaultValues: { name: "", email: "", phone: "", address: "", city: "" },
+  });
+
+  const createCustomer = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("POST", "/api/admin/customers", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      setAddOpen(false);
+      addForm.reset();
+      toast({ title: t("تم إنشاء العميل", "Customer created") });
+    },
+    onError: () => { toast({ title: t("فشل الإنشاء - البريد قد يكون مستخدم", "Creation failed - email may be in use"), variant: "destructive" }); },
+  });
+
+  const updateCustomer = useMutation({
+    mutationFn: async ({ id, ...data }: any) => {
+      const res = await apiRequest("PUT", `/api/admin/customers/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
+      setEditCustomer(null);
+      toast({ title: t("تم التحديث", "Updated") });
+    },
+  });
+
+  const toggleEnabled = useMutation({
+    mutationFn: async ({ id, enabled }: { id: number; enabled: boolean }) => {
+      const res = await apiRequest("PUT", `/api/admin/customers/${id}`, { enabled });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
+      toast({ title: t("تم التحديث", "Updated") });
+    },
+  });
+
+  const deleteCustomer = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/customers/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      toast({ title: t("تم حذف العميل", "Customer deleted") });
+    },
+    onError: () => { toast({ title: t("لا يمكن حذف هذا الحساب", "Cannot delete this account"), variant: "destructive" }); },
+  });
+
+  const viewOrders = async (customer: any) => {
+    setHistoryCustomer(customer);
+    setHistoryLoading(true);
+    try {
+      const res = await apiRequest("GET", `/api/admin/customers/${customer.id}/orders`);
+      const data = await res.json();
+      setCustomerOrders(data);
+    } catch {
+      setCustomerOrders([]);
+    }
+    setHistoryLoading(false);
+  };
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold">{t("إدارة العملاء", "Manage Customers")}</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold">{t("إدارة العملاء", "Manage Customers")}</h2>
+        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2" data-testid="button-add-customer"><UserPlus className="w-4 h-4" />{t("إضافة عميل", "Add Customer")}</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>{t("إضافة عميل جديد", "Add New Customer")}</DialogTitle></DialogHeader>
+            <form onSubmit={addForm.handleSubmit((data) => createCustomer.mutate(data))} className="space-y-4 mt-4">
+              <div>
+                <label className="text-sm font-medium">{t("الاسم", "Name")} *</label>
+                <Input {...addForm.register("name", { required: true, minLength: 2 })} data-testid="input-add-customer-name" />
+              </div>
+              <div>
+                <label className="text-sm font-medium">{t("البريد الإلكتروني", "Email")} *</label>
+                <Input type="email" {...addForm.register("email", { required: true })} data-testid="input-add-customer-email" />
+              </div>
+              <div>
+                <label className="text-sm font-medium">{t("كلمة المرور", "Password")} *</label>
+                <Input type="password" {...addForm.register("password", { required: true, minLength: 6 })} data-testid="input-add-customer-password" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium">{t("الهاتف", "Phone")}</label>
+                  <Input {...addForm.register("phone")} data-testid="input-add-customer-phone" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">{t("المدينة", "City")}</label>
+                  <Input {...addForm.register("city")} data-testid="input-add-customer-city" />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">{t("العنوان", "Address")}</label>
+                <Input {...addForm.register("address")} data-testid="input-add-customer-address" />
+              </div>
+              <Button type="submit" className="w-full" disabled={createCustomer.isPending} data-testid="button-submit-add-customer">
+                {createCustomer.isPending ? <Loader2 className="animate-spin" /> : t("إنشاء حساب", "Create Account")}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
       <Card className="overflow-hidden">
         <Table>
           <TableHeader className="bg-muted/50">
@@ -507,26 +736,144 @@ function CustomersTab() {
               <TableHead>{t("الاسم", "Name")}</TableHead>
               <TableHead>{t("البريد", "Email")}</TableHead>
               <TableHead className="hidden md:table-cell">{t("الهاتف", "Phone")}</TableHead>
-              <TableHead>{t("الدور", "Role")}</TableHead>
               <TableHead>{t("الحالة", "Status")}</TableHead>
+              <TableHead className="text-end">{t("إجراءات", "Actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow><TableCell colSpan={6} className="text-center py-10"><Loader2 className="animate-spin w-8 h-8 mx-auto" /></TableCell></TableRow>
             ) : (customers as any[])?.map((c: any) => (
-              <TableRow key={c.id}>
+              <TableRow key={c.id} data-testid={`row-customer-${c.id}`}>
                 <TableCell>{c.id}</TableCell>
-                <TableCell className="font-medium">{c.name || "-"}</TableCell>
-                <TableCell>{c.email}</TableCell>
-                <TableCell className="hidden md:table-cell">{c.phone || "-"}</TableCell>
-                <TableCell><Badge variant={c.role === "admin" ? "default" : "secondary"} className="no-default-hover-elevate no-default-active-elevate">{c.role}</Badge></TableCell>
-                <TableCell><Badge variant={c.enabled ? "secondary" : "destructive"} className="no-default-hover-elevate no-default-active-elevate">{c.enabled ? t("نشط", "Active") : t("معطل", "Disabled")}</Badge></TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{c.name || "-"}</span>
+                    {c.role === "admin" && <Badge variant="default" className="no-default-hover-elevate no-default-active-elevate w-fit text-[10px] mt-0.5">{t("مشرف", "Admin")}</Badge>}
+                  </div>
+                </TableCell>
+                <TableCell className="text-sm">{c.email}</TableCell>
+                <TableCell className="hidden md:table-cell text-sm">{c.phone || "-"}</TableCell>
+                <TableCell>
+                  <Badge variant={c.enabled ? "secondary" : "destructive"} className="no-default-hover-elevate no-default-active-elevate">
+                    {c.enabled ? t("نشط", "Active") : t("معطل", "Disabled")}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-end">
+                  <div className="flex items-center justify-end gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => viewOrders(c)} data-testid={`button-view-orders-${c.id}`}>
+                      <History className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => { setEditCustomer(c); editForm.reset({ name: c.name || "", email: c.email, phone: c.phone || "", address: c.address || "", city: c.city || "" }); }} data-testid={`button-edit-customer-${c.id}`}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    {c.role !== "admin" && (
+                      <Button variant="ghost" size="icon" onClick={() => toggleEnabled.mutate({ id: c.id, enabled: !c.enabled })} data-testid={`button-toggle-customer-${c.id}`}>
+                        {c.enabled ? <ToggleRight className="w-4 h-4 text-green-600" /> : <ToggleLeft className="w-4 h-4 text-muted-foreground" />}
+                      </Button>
+                    )}
+                    {c.role !== "admin" && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="text-destructive" data-testid={`button-delete-customer-${c.id}`}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t("تأكيد حذف العميل", "Confirm Customer Deletion")}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {t(
+                                `هل أنت متأكد من حذف العميل "${c.name || c.email}"؟ سيتم حذف حسابه نهائياً ولا يمكن التراجع.`,
+                                `Are you sure you want to permanently delete "${c.name || c.email}"? This action cannot be undone.`
+                              )}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t("إلغاء", "Cancel")}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteCustomer.mutate(c.id)} className="bg-destructive text-destructive-foreground" data-testid={`button-confirm-delete-customer-${c.id}`}>
+                              {t("حذف نهائي", "Delete Permanently")}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
+            {!isLoading && (!customers || (customers as any[]).length === 0) && (
+              <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">{t("لا يوجد عملاء", "No customers yet")}</TableCell></TableRow>
+            )}
           </TableBody>
         </Table>
       </Card>
+
+      <Dialog open={!!editCustomer} onOpenChange={(open) => { if (!open) setEditCustomer(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{t("تعديل العميل", "Edit Customer")}</DialogTitle></DialogHeader>
+          <form onSubmit={editForm.handleSubmit((data) => updateCustomer.mutate({ id: editCustomer.id, ...data }))} className="space-y-4 mt-4">
+            <div>
+              <label className="text-sm font-medium">{t("الاسم", "Name")}</label>
+              <Input {...editForm.register("name")} data-testid="input-edit-customer-name" />
+            </div>
+            <div>
+              <label className="text-sm font-medium">{t("البريد الإلكتروني", "Email")}</label>
+              <Input type="email" {...editForm.register("email")} data-testid="input-edit-customer-email" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium">{t("الهاتف", "Phone")}</label>
+                <Input {...editForm.register("phone")} data-testid="input-edit-customer-phone" />
+              </div>
+              <div>
+                <label className="text-sm font-medium">{t("المدينة", "City")}</label>
+                <Input {...editForm.register("city")} data-testid="input-edit-customer-city" />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium">{t("العنوان", "Address")}</label>
+              <Input {...editForm.register("address")} data-testid="input-edit-customer-address" />
+            </div>
+            <Button type="submit" className="w-full" disabled={updateCustomer.isPending} data-testid="button-submit-edit-customer">
+              {updateCustomer.isPending ? <Loader2 className="animate-spin" /> : t("حفظ التغييرات", "Save Changes")}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!historyCustomer} onOpenChange={(open) => { if (!open) { setHistoryCustomer(null); setCustomerOrders([]); } }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t("سجل طلبات", "Order History")} - {historyCustomer?.name || historyCustomer?.email}</DialogTitle>
+          </DialogHeader>
+          {historyLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
+          ) : customerOrders.length === 0 ? (
+            <p className="text-center py-8 text-muted-foreground">{t("لا توجد طلبات لهذا العميل", "No orders for this customer")}</p>
+          ) : (
+            <div className="space-y-3 mt-2">
+              {customerOrders.map((order: any) => (
+                <div key={order.id} className="p-3 bg-muted/50 rounded-md">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-bold text-sm">#{order.id}</span>
+                    <Badge variant="secondary" className="no-default-hover-elevate no-default-active-elevate text-xs">{order.status}</Badge>
+                  </div>
+                  <p className="text-sm">{Number(order.total).toLocaleString()} DZD</p>
+                  <p className="text-xs text-muted-foreground">
+                    {order.createdAt ? new Date(order.createdAt).toLocaleDateString(language === "ar" ? "ar-DZ" : "en-US", { year: "numeric", month: "short", day: "numeric" }) : "-"}
+                  </p>
+                  {order.items?.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {order.items.length} {t("منتج", "item(s)")}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
