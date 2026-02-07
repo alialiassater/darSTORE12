@@ -57,20 +57,8 @@ export async function registerRoutes(
   ];
   app.use(cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl)
-      if (!origin) return callback(null, true);
-
-      const isAllowed = allowedOrigins.includes(origin) || 
-                       origin.includes("replit.dev") || 
-                       origin.includes("replit.app") ||
-                       origin.includes("onrender.com");
-
-      if (isAllowed) {
-        callback(null, true);
-      } else {
-        console.log("CORS rejected origin:", origin);
-        callback(null, true); // Fallback to true for development
-      }
+      // ALWAYS allow in development or on Hostdz/Render domains
+      callback(null, true);
     },
     credentials: true,
   }));
