@@ -279,7 +279,62 @@ function BookDialog({ mode, book }: { mode: "create" | "edit"; book?: Book }) {
               <FormField control={form.control} name="language" render={({ field }) => (<FormItem><FormLabel>{t("لغة الكتاب", "Language")}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="ar">العربية</SelectItem><SelectItem value="en">English</SelectItem><SelectItem value="both">Bilingual</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="isbn" render={({ field }) => (<FormItem><FormLabel>ISBN</FormLabel><FormControl><Input {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>)} />
             </div>
-            <FormField control={form.control} name="image" render={({ field }) => (<FormItem><FormLabel>{t("صورة الغلاف", "Cover Image")}</FormLabel><div className="flex gap-2"><FormControl><Input {...field} placeholder={t("رابط أو ارفع صورة", "URL or upload image")} /></FormControl><label><Button type="button" variant="outline" size="icon" className="shrink-0" onClick={() => document.getElementById("book-cover-upload")?.click()}><Upload className="w-4 h-4" /></Button><input id="book-cover-upload" type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; const fd = new FormData(); fd.append("file", file); try { const res = await fetch(apiUrl("/api/upload"), { method: "POST", body: fd, credentials: "include" }); const data = await res.json(); if (data.url) field.onChange(data.url); } catch {} }} /></label><div className="w-10 h-10 rounded border bg-muted flex items-center justify-center overflow-hidden shrink-0">{field.value ? <img src={field.value} className="w-full h-full object-cover" /> : <ImageIcon className="w-4 h-4 opacity-50" />}</div></div><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="image" render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("صورة الغلاف", "Cover Image")}</FormLabel>
+                <div className="flex gap-4 items-center">
+                  <div className="relative group">
+                    <div className="w-24 h-32 rounded-lg border bg-muted flex items-center justify-center overflow-hidden shadow-sm">
+                      {field.value ? (
+                        <img src={field.value} className="w-full h-full object-cover" />
+                      ) : (
+                        <ImageIcon className="w-8 h-8 opacity-20" />
+                      )}
+                    </div>
+                    <label className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-lg">
+                      <Upload className="w-6 h-6 text-white" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const fd = new FormData();
+                          fd.append("file", file);
+                          try {
+                            const res = await fetch(apiUrl("/api/upload"), {
+                              method: "POST",
+                              body: fd,
+                              credentials: "include"
+                            });
+                            const data = await res.json();
+                            if (data.url) field.onChange(data.url);
+                          } catch (error) {
+                            console.error("Upload failed", error);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium">{t("رفع صورة الغلاف", "Upload Cover Image")}</p>
+                    <p className="text-xs text-muted-foreground">{t("يفضل استخدام صور عالية الجودة بصيغة JPG أو PNG", "Preferred high quality JPG or PNG images")}</p>
+                    {field.value && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-7 text-xs text-destructive hover:text-destructive"
+                        onClick={() => field.onChange("")}
+                      >
+                        {t("حذف الصورة", "Remove Image")}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )} />
             <Button type="submit" className="w-full" disabled={isPending}>
               {isPending ? <Loader2 className="animate-spin" /> : mode === "create" ? t("إنشاء", "Create") : t("حفظ التغييرات", "Save Changes")}
             </Button>
@@ -1358,7 +1413,7 @@ function BlogTab() {
 
   if (creating || editing) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <h2 className="text-xl font-bold">{editing ? t("تعديل المقال", "Edit Post") : t("مقال جديد", "New Post")}</h2>
           <div className="flex gap-2">
@@ -1401,20 +1456,25 @@ function BlogTab() {
 
         <Card>
           <CardContent className="p-6 space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
+            <div className="grid md:grid-cols-2 gap-6 items-start">
+              <div className="space-y-2">
                 <Label>{t("صورة المقال", "Post Image")}</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input value={formData.imageUrl} onChange={(e) => setFormData(p => ({ ...p, imageUrl: e.target.value }))} placeholder="URL" />
-                  <label>
-                    <Button variant="outline" size="icon" className="shrink-0" onClick={() => document.getElementById("blog-img-upload")?.click()}>
-                      <Upload className="w-4 h-4" />
-                    </Button>
-                    <input id="blog-img-upload" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                  </label>
+                <div className="flex gap-4 items-center">
+                  <div className="w-32 h-20 rounded border bg-muted overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
+                    {formData.imageUrl ? <img src={formData.imageUrl} className="w-full h-full object-cover" /> : <ImageIcon className="w-8 h-8 opacity-20" />}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <label>
+                      <Button type="button" variant="outline" className="w-full gap-2" asChild>
+                        <span><Upload className="w-4 h-4" />{t("رفع صورة", "Upload Image")}</span>
+                      </Button>
+                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                    </label>
+                    <Input value={formData.imageUrl} onChange={(e) => setFormData(p => ({ ...p, imageUrl: e.target.value }))} placeholder="URL" className="h-8 text-xs" />
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 pt-6">
+              <div className="flex items-center gap-3 pt-8">
                 <SwitchUI checked={formData.published} onCheckedChange={(v) => setFormData(p => ({ ...p, published: v }))} data-testid="switch-blog-published" />
                 <Label>{t("منشور", "Published")}</Label>
               </div>
@@ -1434,68 +1494,75 @@ function BlogTab() {
         </Button>
       </div>
 
-      {(!posts || posts.length === 0) ? (
-        <Card>
-          <CardContent className="p-12 text-center text-muted-foreground">
-            <Newspaper className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>{t("لا توجد مقالات بعد", "No blog posts yet")}</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="overflow-hidden">
-          <Table>
-            <TableHeader className="bg-muted/50">
+      <Card className="overflow-hidden">
+        <Table>
+          <TableHeader className="bg-muted/50">
+            <TableRow>
+              <TableHead className="w-[80px]">{t("صورة", "Img")}</TableHead>
+              <TableHead>{t("العنوان", "Title")}</TableHead>
+              <TableHead className="w-24">{t("الحالة", "Status")}</TableHead>
+              <TableHead className="w-32">{t("التاريخ", "Date")}</TableHead>
+              <TableHead className="text-end">{t("إجراءات", "Actions")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {(!posts || posts.length === 0) ? (
               <TableRow>
-                <TableHead>{t("العنوان", "Title")}</TableHead>
-                <TableHead>{t("الحالة", "Status")}</TableHead>
-                <TableHead>{t("التاريخ", "Date")}</TableHead>
-                <TableHead>{t("إجراءات", "Actions")}</TableHead>
+                <TableCell colSpan={5} className="p-12 text-center text-muted-foreground">
+                  <Newspaper className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>{t("لا توجد مقالات بعد", "No blog posts yet")}</p>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {posts.map((post) => (
-                <TableRow key={post.id} data-testid={`row-blog-${post.id}`}>
-                  <TableCell className="font-medium">
-                    {language === "ar" ? post.titleAr : post.titleEn}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={post.published ? "default" : "secondary"} className="no-default-hover-elevate no-default-active-elevate">
-                      {post.published ? t("منشور", "Published") : t("مسودة", "Draft")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : "-"}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(post)} data-testid={`button-edit-blog-${post.id}`}>
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" data-testid={`button-delete-blog-${post.id}`}>
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{t("تأكيد الحذف", "Confirm Delete")}</AlertDialogTitle>
-                            <AlertDialogDescription>{t("هل أنت متأكد من حذف هذا المقال؟", "Are you sure you want to delete this post?")}</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t("إلغاء", "Cancel")}</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => deleteMutation.mutate(post.id)}>{t("حذف", "Delete")}</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
-      )}
+            ) : posts.map((post) => (
+              <TableRow key={post.id} data-testid={`row-blog-${post.id}`}>
+                <TableCell>
+                  <div className="w-12 h-8 rounded bg-muted overflow-hidden flex items-center justify-center">
+                    {post.imageUrl ? <img src={post.imageUrl} className="w-full h-full object-cover" /> : <ImageIcon className="w-4 h-4 opacity-50" />}
+                  </div>
+                </TableCell>
+                <TableCell className="font-medium">
+                  <div className="flex flex-col">
+                    <span>{post.titleAr}</span>
+                    <span className="text-xs text-muted-foreground">{post.titleEn}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={post.published ? "default" : "secondary"} className="no-default-hover-elevate no-default-active-elevate">
+                    {post.published ? t("منشور", "Published") : t("مسودة", "Draft")}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {post.createdAt ? new Date(post.createdAt).toLocaleDateString(language === "ar" ? "ar-DZ" : "en-US") : "-"}
+                </TableCell>
+                <TableCell className="text-end">
+                  <div className="flex justify-end gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(post)} data-testid={`button-edit-blog-${post.id}`}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" data-testid={`button-delete-blog-${post.id}`}>
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t("تأكيد الحذف", "Confirm Delete")}</AlertDialogTitle>
+                          <AlertDialogDescription>{t("هل أنت متأكد من حذف هذا المقال؟", "Are you sure you want to delete this post?")}</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t("إلغاء", "Cancel")}</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deleteMutation.mutate(post.id)} className="bg-destructive text-destructive-foreground">{t("حذف", "Delete")}</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }

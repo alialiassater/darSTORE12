@@ -3,20 +3,123 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useBooks } from "@/hooks/use-books";
 import { BookCard } from "@/components/ui/book-card";
-import { BookOpen, Star, Sparkles, TrendingUp } from "lucide-react";
+import { BookOpen, Star, Sparkles, TrendingUp, Pencil, Loader2, Save } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiUrl } from "@/lib/queryClient";
+import { apiUrl, apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useToast } from "@/hooks/use-toast";
+
+const homeSchema = z.object({
+  heroTitleAr: z.string().min(1),
+  heroTitleEn: z.string().min(1),
+  heroDescAr: z.string().min(1),
+  heroDescEn: z.string().min(1),
+});
+
+type HomeData = z.infer<typeof homeSchema>;
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { t, language, dir } = useLanguage();
   const { data: books, isLoading } = useBooks();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
 
+  const { data: page } = useQuery<any>({
+    queryKey: ["/api/pages/home"],
+    queryFn: async () => {
+      const res = await fetch("/api/pages/home");
+      if (!res.ok) return null;
+      return res.json();
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: HomeData) => {
+      await apiRequest("PUT", "/api/admin/pages/home", {
+        slug: "home",
+        titleAr: data.heroTitleAr,
+        titleEn: data.heroTitleEn,
+        contentAr: data.heroDescAr,
+        contentEn: data.heroDescEn,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pages/home"] });
+      setIsEditing(false);
+      toast({ title: t("تم التحديث بنجاح", "Updated successfully") });
+    }
+  });
+
+  const form = useForm<HomeData>({
+    resolver: zodResolver(homeSchema),
+    values: {
+      heroTitleAr: page?.titleAr || "دار علي بن زيد للطباعة والنشر",
+      heroTitleEn: page?.titleEn || "Dar Ali Benzid for Printing & Publishing",
+      heroDescAr: page?.contentAr || "دار علي بن زيد للطباعة والنشر تقدم لك نخبة من أفضل الكتب العربية والعالمية. تصفح اصداراتنا .",
+      heroDescEn: page?.contentEn || "Dar Ali BenZid for Printing & Publishing offers you a selection of the best Arabic and international books. Browse our carefully curated collection.",
+    }
+  });
+
+  const isAdmin = user && (user.role === "admin" || user.role === "employee");
   const featuredBooks = books?.slice(0, 4);
 
   return (
     <div className="flex flex-col min-h-screen page-transition">
       {/* Hero Section */}
       <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden bg-primary">
+        {/* Admin Edit Trigger */}
+        {isAdmin && (
+          <Dialog open={isEditing} onOpenChange={setIsEditing}>
+            <DialogTrigger asChild>
+              <Button
+                size="icon"
+                variant="default"
+                className="fixed bottom-24 end-6 z-50 shadow-lg rounded-full"
+                data-testid="button-edit-home"
+              >
+                <Pencil className="w-5 h-5" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>{t("تعديل القسم الرئيسي", "Edit Hero Section")}</DialogTitle>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit((data) => updateMutation.mutate(data))} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="heroTitleAr" render={({ field }) => (
+                      <FormItem><FormLabel>{t("العنوان (عربي)", "Title (AR)")}</FormLabel><FormControl><Input {...field} dir="rtl" /></FormControl></FormItem>
+                    )} />
+                    <FormField control={form.control} name="heroTitleEn" render={({ field }) => (
+                      <FormItem><FormLabel>{t("العنوان (إنجليزي)", "Title (EN)")}</FormLabel><FormControl><Input {...field} dir="ltr" /></FormControl></FormItem>
+                    )} />
+                  </div>
+                  <FormField control={form.control} name="heroDescAr" render={({ field }) => (
+                    <FormItem><FormLabel>{t("الوصف (عربي)", "Description (AR)")}</FormLabel><FormControl><Textarea {...field} dir="rtl" /></FormControl></FormItem>
+                  )} />
+                  <FormField control={form.control} name="heroDescEn" render={({ field }) => (
+                    <FormItem><FormLabel>{t("الوصف (إنجليزي)", "Description (EN)")}</FormLabel><FormControl><Textarea {...field} dir="ltr" /></FormControl></FormItem>
+                  )} />
+                  <Button type="submit" className="w-full" disabled={updateMutation.isPending}>
+                    {updateMutation.isPending ? <Loader2 className="animate-spin" /> : <><Save className="w-4 h-4 me-2" />{t("حفظ", "Save")}</>}
+                  </Button>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        )}
+
         {/* Background Image / Pattern with Dark Overlay */}
         <div className="absolute inset-0 z-0">
           <img 
@@ -34,10 +137,10 @@ export default function Home() {
 
         <div className="container mx-auto px-4 relative z-20 text-center max-w-4xl py-20 md:py-32">
           <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 leading-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-            {t("دار علي بن زيد للطباعة والنشر", "Dar Ali Benzid for Printing & Publishing")}
+            {page ? (language === "ar" ? page.titleAr : page.titleEn) : t("دار علي بن زيد للطباعة والنشر", "Dar Ali Benzid for Printing & Publishing")}
           </h1>
           <p className="text-lg md:text-xl text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-sm font-medium">
-            {t(
+            {page ? (language === "ar" ? page.contentAr : page.contentEn) : t(
               "دار علي بن زيد للطباعة والنشر تقدم لك نخبة من أفضل الكتب العربية والعالمية. تصفح اصداراتنا .",
               "Dar Ali BenZid for Printing & Publishing offers you a selection of the best Arabic and international books. Browse our carefully curated collection."
             )}
@@ -61,21 +164,21 @@ export default function Home() {
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-card p-6 rounded-xl border shadow-sm flex flex-col items-center text-center animate-fade-in-up stagger-1">
+            <div className="bg-card p-6 rounded-xl border shadow-sm flex flex-col items-center text-center animate-fade-in-up stagger-1 hover-elevate">
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4">
                 <BookOpen className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold mb-2">{t("مجموعة متنوعة", "Diverse Collection")}</h3>
               <p className="text-muted-foreground">{t("آلاف الكتب في شتى المجالات", "Thousands of books in various fields")}</p>
             </div>
-            <div className="bg-card p-6 rounded-xl border shadow-sm flex flex-col items-center text-center animate-fade-in-up stagger-2">
+            <div className="bg-card p-6 rounded-xl border shadow-sm flex flex-col items-center text-center animate-fade-in-up stagger-2 hover-elevate">
               <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center text-accent mb-4">
                 <Star className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold mb-2">{t("جودة عالية", "High Quality")}</h3>
               <p className="text-muted-foreground">{t("كتب وطبعات فاخرة", "Premium books and editions")}</p>
             </div>
-            <div className="bg-card p-6 rounded-xl border shadow-sm flex flex-col items-center text-center animate-fade-in-up stagger-3">
+            <div className="bg-card p-6 rounded-xl border shadow-sm flex flex-col items-center text-center animate-fade-in-up stagger-3 hover-elevate">
               <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center text-green-600 mb-4">
                 <Sparkles className="w-6 h-6" />
               </div>
