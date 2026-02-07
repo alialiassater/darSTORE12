@@ -84,8 +84,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || "5000", 10);
- httpServer.listen(port, "localhost", () => {
-  log(`serving on port ${port}`);
-});
+const express = require('express')
+const app = express()
+const port = process.env.PORT || 4000 
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`)
+})
 })();
