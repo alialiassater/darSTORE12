@@ -272,7 +272,7 @@ function BookDialog({ mode, book }: { mode: "create" | "edit"; book?: Book }) {
                 <FormField control={form.control} name="descriptionEn" render={({ field }) => (<FormItem><FormLabel>{t("الوصف (إنجليزي)", "Description (EN)")}</FormLabel><FormControl><Textarea {...field} dir="ltr" className="min-h-[100px]" /></FormControl><FormMessage /></FormItem>)} />
               </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t">
               <FormField control={form.control} name="author" render={({ field }) => (<FormItem className="col-span-2"><FormLabel>{t("المؤلف", "Author")}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel>{t("السعر (DZD)", "Price")}</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="stock" render={({ field }) => (<FormItem><FormLabel>{t("المخزون", "Stock")}</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value) || 0)} /></FormControl><FormMessage /></FormItem>)} />
