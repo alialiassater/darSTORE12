@@ -166,10 +166,11 @@ export async function registerRoutes(
       await logAdminAction(req, "Created book", "book", book.id, `${input.titleEn}`);
       res.status(201).json(book);
     } catch (err) {
+      console.error("Book creation error:", err);
       if (err instanceof z.ZodError) {
-        res.status(400).json({ message: "Validation error" });
+        res.status(400).json({ message: "Validation error", errors: err.errors });
       } else {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: "Server error", detail: String(err) });
       }
     }
   });
