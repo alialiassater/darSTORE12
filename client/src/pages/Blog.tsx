@@ -49,9 +49,9 @@ export default function Blog() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.map((post) => (
+            {posts.map((post, index) => (
               <Link key={post.id} href={`/blog/${post.id}`}>
-                <Card className="group h-full flex flex-col overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer" data-testid={`card-blog-${post.id}`}>
+                <Card className="group h-full flex flex-col overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }} data-testid={`card-blog-${post.id}`}>
                   <div className="relative aspect-video overflow-hidden bg-muted">
                     {post.imageUrl ? (
                       <img

@@ -91,8 +91,10 @@ export default function Store() {
           </div>
         ) : books && books.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {books.map((book: any) => (
-              <BookCard key={book.id} book={book} />
+            {books.map((book: any, index: number) => (
+              <div key={book.id} className="animate-fade-in-up" style={{ animationDelay: `${Math.min(index * 0.05, 0.4)}s` }}>
+                <BookCard book={book} />
+              </div>
             ))}
           </div>
         ) : (

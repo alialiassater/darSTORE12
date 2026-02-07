@@ -61,21 +61,21 @@ export default function Home() {
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-card p-6 rounded-xl border shadow-sm flex flex-col items-center text-center">
+            <div className="bg-card p-6 rounded-xl border shadow-sm flex flex-col items-center text-center animate-fade-in-up stagger-1">
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4">
                 <BookOpen className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold mb-2">{t("مجموعة متنوعة", "Diverse Collection")}</h3>
               <p className="text-muted-foreground">{t("آلاف الكتب في شتى المجالات", "Thousands of books in various fields")}</p>
             </div>
-            <div className="bg-card p-6 rounded-xl border shadow-sm flex flex-col items-center text-center">
+            <div className="bg-card p-6 rounded-xl border shadow-sm flex flex-col items-center text-center animate-fade-in-up stagger-2">
               <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center text-accent mb-4">
                 <Star className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold mb-2">{t("جودة عالية", "High Quality")}</h3>
-              <p className="text-muted-foreground">{t("كتب وطبعات فاخرة", " books and premium editions")}</p>
+              <p className="text-muted-foreground">{t("كتب وطبعات فاخرة", "Premium books and editions")}</p>
             </div>
-            <div className="bg-card p-6 rounded-xl border shadow-sm flex flex-col items-center text-center">
+            <div className="bg-card p-6 rounded-xl border shadow-sm flex flex-col items-center text-center animate-fade-in-up stagger-3">
               <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center text-green-600 mb-4">
                 <Sparkles className="w-6 h-6" />
               </div>
