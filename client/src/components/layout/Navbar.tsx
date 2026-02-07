@@ -45,12 +45,12 @@ export function Navbar() {
           <span className="sm:hidden">{t("دار علي بن زيد", "DAB")}</span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden md:flex items-center gap-4 lg:gap-6">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`text-sm font-medium transition-colors ${
+              className={`text-sm font-medium transition-colors whitespace-nowrap ${
                 location === link.href ? "text-primary-foreground font-bold underline underline-offset-4" : "text-primary-foreground/80 hover:text-primary-foreground"
               }`}
               data-testid={`link-nav-${link.href.replace("/", "") || "home"}`}
