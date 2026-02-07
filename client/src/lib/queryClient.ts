@@ -3,7 +3,9 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 export const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
 
 export function apiUrl(path: string): string {
-  return API_BASE + path;
+  if (path.startsWith("http")) return path;
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  return API_BASE + cleanPath;
 }
 
 async function throwIfResNotOk(res: Response) {

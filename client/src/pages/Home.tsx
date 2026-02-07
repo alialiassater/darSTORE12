@@ -5,6 +5,7 @@ import { useBooks } from "@/hooks/use-books";
 import { BookCard } from "@/components/ui/book-card";
 import { BookOpen, Star, Sparkles, TrendingUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiUrl } from "@/lib/queryClient";
 
 export default function Home() {
   const { t } = useLanguage();
@@ -19,7 +20,7 @@ export default function Home() {
         {/* Background Image / Pattern with Dark Overlay */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="/books-bg.jpg" 
+            src={apiUrl("/books-bg.jpg")} 
             alt="Library background" 
             className="absolute inset-0 w-full h-full object-cover"
           />
