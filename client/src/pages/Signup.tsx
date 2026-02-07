@@ -39,7 +39,8 @@ export default function Signup() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: z.infer<typeof registerUserSchema>) => {
-      const res = await fetch(api.auth.register.path, {
+      const { apiUrl } = await import("@/lib/queryClient");
+      const res = await fetch(apiUrl(api.auth.register.path), {
         method: api.auth.register.method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",

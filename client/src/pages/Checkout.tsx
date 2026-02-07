@@ -85,7 +85,8 @@ export default function Checkout() {
         ? (language === "ar" ? wilayaInfo.nameAr : wilayaInfo.nameEn)
         : "";
 
-      const res = await fetch("/api/orders", {
+      const { apiUrl } = await import("@/lib/queryClient");
+      const res = await fetch(apiUrl("/api/orders"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

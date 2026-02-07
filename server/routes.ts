@@ -1,5 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import cors from "cors";
 import { storage } from "./storage";
 import { setupAuth, hashPassword } from "./auth";
 import { api } from "@shared/routes";
@@ -43,6 +44,25 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  const allowedOrigins = [
+    "https://daralibenzid.dz",
+    "https://www.daralibenzid.dz",
+    "http://daralibenzid.dz",
+    "http://www.daralibenzid.dz",
+    "http://localhost:5000",
+    "http://localhost:5173",
+  ];
+  app.use(cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
+    credentials: true,
+  }));
+
   const { hashPassword } = setupAuth(app);
 
   // === AUTH ===

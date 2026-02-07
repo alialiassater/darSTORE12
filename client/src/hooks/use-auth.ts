@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@shared/routes";
 import { type User, type InsertUser } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { apiUrl } from "@/lib/queryClient";
 
 // Need to match the Zod schema inputs
 type LoginInput = { username: string; password: string }; // Using username for email field as per passport convention often
@@ -13,7 +14,7 @@ export function useAuth() {
   const { data: user, isLoading, error } = useQuery({
     queryKey: [api.auth.me.path],
     queryFn: async () => {
-      const res = await fetch(api.auth.me.path);
+      const res = await fetch(apiUrl(api.auth.me.path), { credentials: "include" });
       if (res.status === 401) return null;
       if (!res.ok) throw new Error("Failed to fetch user");
       return await res.json(); // Type inference handles the schema validation if set up in queryClient, or manually here
@@ -22,10 +23,11 @@ export function useAuth() {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginInput) => {
-      const res = await fetch(api.auth.login.path, {
+      const res = await fetch(apiUrl(api.auth.login.path), {
         method: api.auth.login.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
+        credentials: "include",
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -48,7 +50,7 @@ export function useAuth() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await fetch(api.auth.logout.path, { method: api.auth.logout.method });
+      await fetch(apiUrl(api.auth.logout.path), { method: api.auth.logout.method, credentials: "include" });
     },
     onSuccess: () => {
       queryClient.setQueryData([api.auth.me.path], null);
