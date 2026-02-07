@@ -1,6 +1,5 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
-import cors from "cors";
 import { storage } from "./storage";
 import { setupAuth, hashPassword } from "./auth";
 import { api } from "@shared/routes";
@@ -44,40 +43,28 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  const allowedOrigins = [
-    "https://daralibenzid.dz",
-    "https://www.daralibenzid.dz",
-    "http://daralibenzid.dz",
-    "http://www.daralibenzid.dz",
-    "https://darstore12.onrender.com",
-    "http://localhost:5000",
-    "http://localhost:5173",
-    "http://127.0.0.1:5000",
-    "http://127.0.0.1:5173",
-  ];
-  app.use(cors({
-    origin: (origin, callback) => {
-      // Allow all origins for simplicity and to avoid CORS issues
-      callback(null, true);
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
-  }));
-
-  // Manual preflight handler to avoid Express 5 path-to-regexp issues
+  // CORS: Allow all origins with credentials for cross-domain deployment
   app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept, Origin");
+
     if (req.method === "OPTIONS") {
-      res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
-      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
-      res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept, Origin");
-      res.header("Access-Control-Allow-Credentials", "true");
       return res.sendStatus(200);
     }
     next();
   });
 
   const { hashPassword } = setupAuth(app);
+
+  // Health check endpoint
+  app.get("/", (_req, res) => {
+    res.json({ status: "ok", message: "Dar Ali BenZid API is running" });
+  });
 
   // === AUTH ===
   app.post(api.auth.register.path, async (req, res) => {
@@ -113,17 +100,15 @@ export async function registerRoutes(
   });
 
   app.post(api.auth.login.path, (req, res, next) => {
-    // passport-local expects 'username' and 'password'
-    // Ensure we have username from email if provided
+    console.log("Login attempt, body keys:", Object.keys(req.body || {}));
+    // Normalize: accept either 'username' or 'email' field
     if (req.body.email && !req.body.username) {
       req.body.username = req.body.email;
     }
-    
-    // Loosen validation for login to just check for strings
-    if (typeof req.body.username !== 'string' || typeof req.body.password !== 'string') {
-      return res.status(400).json({ message: "Invalid input types" });
+    if (!req.body.username || !req.body.password) {
+      console.log("Login rejected: missing fields", { hasUsername: !!req.body.username, hasPassword: !!req.body.password });
+      return res.status(400).json({ message: "Email and password are required" });
     }
-    
     next();
   }, (req, res, next) => {
     passport.authenticate("local", (err: any, user: any, info: any) => {
@@ -132,8 +117,8 @@ export async function registerRoutes(
         return res.status(500).json({ message: "Server error during login" });
       }
       if (!user) {
-        console.log("Login failed for:", req.body.username, "info:", info);
-        return res.status(401).json({ message: "Invalid credentials" });
+        console.log("Login failed for:", req.body.username);
+        return res.status(401).json({ message: "Invalid email or password" });
       }
       req.login(user, (err) => {
         if (err) {
@@ -141,6 +126,7 @@ export async function registerRoutes(
           return res.status(500).json({ message: "Session error" });
         }
         const { password, ...safeUser } = user;
+        console.log("Login successful for:", safeUser.email);
         res.json(safeUser);
       });
     })(req, res, next);
