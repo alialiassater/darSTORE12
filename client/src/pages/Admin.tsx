@@ -146,6 +146,7 @@ function BooksTab() {
               <TableHead>{t("العنوان", "Title")}</TableHead>
               <TableHead className="hidden md:table-cell">{t("المؤلف", "Author")}</TableHead>
               <TableHead>{t("السعر", "Price")}</TableHead>
+              <TableHead className="hidden md:table-cell">{t("النقاط", "Points")}</TableHead>
               <TableHead className="hidden md:table-cell">{t("المخزون", "Stock")}</TableHead>
               <TableHead className="hidden lg:table-cell">{t("التصنيف", "Category")}</TableHead>
               <TableHead className="text-end">{t("إجراءات", "Actions")}</TableHead>
@@ -165,6 +166,11 @@ function BooksTab() {
                 </TableCell>
                 <TableCell className="hidden md:table-cell">{book.author}</TableCell>
                 <TableCell>{Number(book.price).toLocaleString()} DZD</TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {book.pointsPrice ? (
+                    <Badge variant="secondary" className="no-default-hover-elevate no-default-active-elevate">{book.pointsPrice} {t("نقطة", "pts")}</Badge>
+                  ) : <span className="text-muted-foreground">-</span>}
+                </TableCell>
                 <TableCell className="hidden md:table-cell">
                   <Badge variant={book.stock < 5 ? "destructive" : "secondary"} className="no-default-hover-elevate no-default-active-elevate">{book.stock}</Badge>
                 </TableCell>
@@ -221,10 +227,11 @@ function BookDialog({ mode, book }: { mode: "create" | "edit"; book?: Book }) {
       published: book.published,
       isbn: book.isbn || "",
       stock: book.stock,
+      pointsPrice: book.pointsPrice ?? null,
     } : {
       titleAr: "", titleEn: "", author: "", descriptionAr: "", descriptionEn: "",
       price: "0", category: "", image: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=800&q=80",
-      language: "ar", published: true, isbn: "", stock: 0,
+      language: "ar", published: true, isbn: "", stock: 0, pointsPrice: null,
     },
   });
 
@@ -272,6 +279,7 @@ function BookDialog({ mode, book }: { mode: "create" | "edit"; book?: Book }) {
               <FormField control={form.control} name="category" render={({ field }) => (<FormItem><FormLabel>{t("التصنيف", "Category")}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger></FormControl><SelectContent>{CATEGORIES_STATIC.map(c => (<SelectItem key={c} value={c}>{c}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="language" render={({ field }) => (<FormItem><FormLabel>{t("لغة الكتاب", "Language")}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="ar">العربية</SelectItem><SelectItem value="en">English</SelectItem><SelectItem value="both">Bilingual</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="isbn" render={({ field }) => (<FormItem><FormLabel>ISBN</FormLabel><FormControl><Input {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="pointsPrice" render={({ field }) => (<FormItem><FormLabel>{t("سعر النقاط", "Points Price")}</FormLabel><FormControl><Input type="number" placeholder={t("مثال: 40", "e.g. 40")} {...field} value={field.value ?? ""} onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : null)} /></FormControl><FormMessage /></FormItem>)} />
             </div>
             <FormField control={form.control} name="image" render={({ field }) => (<FormItem><FormLabel>{t("رابط الصورة", "Image URL")}</FormLabel><div className="flex gap-2"><FormControl><Input {...field} /></FormControl><div className="w-10 h-10 rounded border bg-muted flex items-center justify-center overflow-hidden shrink-0">{field.value ? <img src={field.value} className="w-full h-full object-cover" /> : <ImageIcon className="w-4 h-4 opacity-50" />}</div></div><FormMessage /></FormItem>)} />
             <Button type="submit" className="w-full" disabled={isPending}>

@@ -38,6 +38,7 @@ export const books = pgTable("books", {
   published: boolean("published").default(true).notNull(),
   isbn: text("isbn"),
   stock: integer("stock").default(0).notNull(),
+  pointsPrice: integer("points_price"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

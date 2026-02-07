@@ -3,7 +3,8 @@ import { useLanguage } from "@/hooks/use-language";
 import { useCart } from "@/hooks/use-cart";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ShoppingCart, Award } from "lucide-react";
 import { Link } from "wouter";
 
 interface BookCardProps {
@@ -54,10 +55,16 @@ export function BookCard({ book }: BookCardProps) {
           </p>
         </CardContent>
 
-        <CardFooter className="p-4 pt-0 flex justify-between items-center border-t border-border/50 mt-auto">
+        <CardFooter className="p-4 pt-0 flex justify-between items-center gap-2 border-t border-border/50 mt-auto flex-wrap">
           <span className="font-bold text-lg text-primary">
             {Number(book.price).toLocaleString()} DZD
           </span>
+          {book.pointsPrice && book.pointsPrice > 0 && (
+            <Badge variant="secondary" className="gap-1 no-default-hover-elevate no-default-active-elevate">
+              <Award className="w-3 h-3 text-yellow-500" />
+              {book.pointsPrice} {t("نقطة", "pts")}
+            </Badge>
+          )}
         </CardFooter>
       </Card>
     </Link>

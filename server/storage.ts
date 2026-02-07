@@ -52,6 +52,7 @@ export interface IStorage {
   getUserOrders(userId: number): Promise<OrderWithItems[]>;
   updateOrderStatus(id: number, status: string): Promise<Order>;
   updateOrderPointsAwarded(id: number, awarded: boolean): Promise<Order>;
+  updateOrderPointsUsed(id: number, pointsUsed: number): Promise<Order>;
   deleteOrder(id: number): Promise<void>;
   countOrders(): Promise<number>;
   totalRevenue(): Promise<number>;
@@ -270,6 +271,11 @@ export class DatabaseStorage implements IStorage {
 
   async updateOrderPointsAwarded(id: number, awarded: boolean): Promise<Order> {
     const [order] = await db.update(orders).set({ pointsAwarded: awarded }).where(eq(orders.id, id)).returning();
+    return order;
+  }
+
+  async updateOrderPointsUsed(id: number, pointsUsed: number): Promise<Order> {
+    const [order] = await db.update(orders).set({ pointsUsed }).where(eq(orders.id, id)).returning();
     return order;
   }
 
