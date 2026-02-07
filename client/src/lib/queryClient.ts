@@ -5,6 +5,12 @@ export const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
 export function apiUrl(path: string): string {
   if (path.startsWith("http")) return path;
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  
+  // If we're on the production domain, use relative paths
+  if (window.location.hostname === "daralibenzid.dz" || window.location.hostname === "www.daralibenzid.dz") {
+    return cleanPath;
+  }
+  
   return API_BASE + cleanPath;
 }
 

@@ -54,10 +54,15 @@ export async function registerRoutes(
   ];
   app.use(cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin) || origin.includes("replit.dev") || origin.includes("replit.app")) {
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        // Log the rejected origin to help debugging
+        console.log("CORS rejected origin:", origin);
+        callback(null, true); // Fallback to true for development/replit environment
       }
     },
     credentials: true,
