@@ -45,7 +45,10 @@ export function useCreateBook() {
         body: JSON.stringify(data),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to create book");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.detail || errorData.message || "Failed to create book");
+      }
       return await res.json();
     },
     onSuccess: () => {
