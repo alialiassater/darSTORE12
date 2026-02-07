@@ -108,9 +108,21 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/", (_req, res) => {
+    res.json({ status: "ok", message: "Dar Ali BenZid API is running" });
+  });
+
   app.post(api.auth.login.path, (req, res, next) => {
+    // passport-local expects 'username' and 'password'
+    // But our shared schema and frontend might be using 'email'
+    if (req.body.email && !req.body.username) {
+      req.body.username = req.body.email;
+    }
     const result = api.auth.login.input.safeParse(req.body);
-    if (!result.success) return res.status(400).json({ message: "Invalid input" });
+    if (!result.success) {
+      console.log("Login validation failed:", result.error.format());
+      return res.status(400).json({ message: "Invalid input", details: result.error.format() });
+    }
     next();
   }, (req, res, next) => {
     passport.authenticate("local", (err: any, user: any, info: any) => {
