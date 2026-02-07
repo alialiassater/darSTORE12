@@ -30,7 +30,7 @@ import {
   Plus, Pencil, Trash2, Loader2, Image as ImageIcon,
   BookOpen, Package, Users, Activity, BarChart3, Tag, Eye,
   ShoppingBag, UserPlus, UserX, ToggleLeft, ToggleRight, History,
-  MapPin, Truck, Save, Check, X, Award, Minus
+  MapPin, Truck, Save, Check, X, Minus
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -146,7 +146,6 @@ function BooksTab() {
               <TableHead>{t("العنوان", "Title")}</TableHead>
               <TableHead className="hidden md:table-cell">{t("المؤلف", "Author")}</TableHead>
               <TableHead>{t("السعر", "Price")}</TableHead>
-              <TableHead className="hidden md:table-cell">{t("النقاط", "Points")}</TableHead>
               <TableHead className="hidden md:table-cell">{t("المخزون", "Stock")}</TableHead>
               <TableHead className="hidden lg:table-cell">{t("التصنيف", "Category")}</TableHead>
               <TableHead className="text-end">{t("إجراءات", "Actions")}</TableHead>
@@ -166,11 +165,6 @@ function BooksTab() {
                 </TableCell>
                 <TableCell className="hidden md:table-cell">{book.author}</TableCell>
                 <TableCell>{Number(book.price).toLocaleString()} DZD</TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {book.pointsPrice ? (
-                    <Badge variant="secondary" className="no-default-hover-elevate no-default-active-elevate">{book.pointsPrice} {t("نقطة", "pts")}</Badge>
-                  ) : <span className="text-muted-foreground">-</span>}
-                </TableCell>
                 <TableCell className="hidden md:table-cell">
                   <Badge variant={book.stock < 5 ? "destructive" : "secondary"} className="no-default-hover-elevate no-default-active-elevate">{book.stock}</Badge>
                 </TableCell>
@@ -227,11 +221,10 @@ function BookDialog({ mode, book }: { mode: "create" | "edit"; book?: Book }) {
       published: book.published,
       isbn: book.isbn || "",
       stock: book.stock,
-      pointsPrice: book.pointsPrice ?? null,
     } : {
       titleAr: "", titleEn: "", author: "", descriptionAr: "", descriptionEn: "",
       price: "0", category: "", image: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=800&q=80",
-      language: "ar", published: true, isbn: "", stock: 0, pointsPrice: null,
+      language: "ar", published: true, isbn: "", stock: 0,
     },
   });
 
@@ -279,7 +272,6 @@ function BookDialog({ mode, book }: { mode: "create" | "edit"; book?: Book }) {
               <FormField control={form.control} name="category" render={({ field }) => (<FormItem><FormLabel>{t("التصنيف", "Category")}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger></FormControl><SelectContent>{CATEGORIES_STATIC.map(c => (<SelectItem key={c} value={c}>{c}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="language" render={({ field }) => (<FormItem><FormLabel>{t("لغة الكتاب", "Language")}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="ar">العربية</SelectItem><SelectItem value="en">English</SelectItem><SelectItem value="both">Bilingual</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="isbn" render={({ field }) => (<FormItem><FormLabel>ISBN</FormLabel><FormControl><Input {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="pointsPrice" render={({ field }) => (<FormItem><FormLabel>{t("سعر النقاط", "Points Price")}</FormLabel><FormControl><Input type="number" placeholder={t("مثال: 40", "e.g. 40")} {...field} value={field.value ?? ""} onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : null)} /></FormControl><FormMessage /></FormItem>)} />
             </div>
             <FormField control={form.control} name="image" render={({ field }) => (<FormItem><FormLabel>{t("رابط الصورة", "Image URL")}</FormLabel><div className="flex gap-2"><FormControl><Input {...field} /></FormControl><div className="w-10 h-10 rounded border bg-muted flex items-center justify-center overflow-hidden shrink-0">{field.value ? <img src={field.value} className="w-full h-full object-cover" /> : <ImageIcon className="w-4 h-4 opacity-50" />}</div></div><FormMessage /></FormItem>)} />
             <Button type="submit" className="w-full" disabled={isPending}>
@@ -634,10 +626,6 @@ function CustomersTab() {
   const [historyCustomer, setHistoryCustomer] = useState<any>(null);
   const [customerOrders, setCustomerOrders] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [pointsCustomer, setPointsCustomer] = useState<any>(null);
-  const [pointsAction, setPointsAction] = useState<"add" | "subtract">("add");
-  const [pointsAmount, setPointsAmount] = useState("");
-  const [pointsReason, setPointsReason] = useState("");
 
   const addForm = useForm({
     defaultValues: { email: "", password: "", name: "", phone: "", address: "", city: "" },
@@ -683,21 +671,6 @@ function CustomersTab() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
       toast({ title: t("تم التحديث", "Updated") });
     },
-  });
-
-  const updatePoints = useMutation({
-    mutationFn: async ({ id, points, action, reason }: { id: number; points: number; action: string; reason: string }) => {
-      const res = await apiRequest("PUT", `/api/admin/customers/${id}/points`, { points, action, reason });
-      return res.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
-      setPointsCustomer(null);
-      setPointsAmount("");
-      setPointsReason("");
-      toast({ title: t("تم تحديث النقاط", "Points updated"), description: t(`الرصيد الجديد: ${data.points} نقطة`, `New balance: ${data.points} points`) });
-    },
-    onError: () => { toast({ title: t("فشل تحديث النقاط", "Failed to update points"), variant: "destructive" }); },
   });
 
   const deleteCustomer = useMutation({
@@ -779,7 +752,6 @@ function CustomersTab() {
               <TableHead>{t("البريد", "Email")}</TableHead>
               <TableHead className="hidden md:table-cell">{t("الهاتف", "Phone")}</TableHead>
               <TableHead>{t("الدور", "Role")}</TableHead>
-              <TableHead>{t("النقاط", "Points")}</TableHead>
               <TableHead>{t("الحالة", "Status")}</TableHead>
               <TableHead className="text-end">{t("إجراءات", "Actions")}</TableHead>
             </TableRow>
@@ -801,9 +773,6 @@ function CustomersTab() {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <span className="font-bold text-accent">{c.points || 0}</span>
-                </TableCell>
-                <TableCell>
                   <Badge variant={c.enabled ? "secondary" : "destructive"} className="no-default-hover-elevate no-default-active-elevate">
                     {c.enabled ? t("نشط", "Active") : t("معطل", "Disabled")}
                   </Badge>
@@ -812,9 +781,6 @@ function CustomersTab() {
                   <div className="flex items-center justify-end gap-1">
                     <Button variant="ghost" size="icon" onClick={() => viewOrders(c)} data-testid={`button-view-orders-${c.id}`}>
                       <History className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => { setPointsCustomer(c); setPointsAction("add"); setPointsAmount(""); setPointsReason(""); }} data-testid={`button-manage-points-${c.id}`}>
-                      <Award className="w-4 h-4" />
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => { setEditCustomer(c); editForm.reset({ name: c.name || "", email: c.email, phone: c.phone || "", address: c.address || "", city: c.city || "", password: "", role: c.role || "user" }); }} data-testid={`button-edit-customer-${c.id}`}>
                       <Pencil className="w-4 h-4" />
@@ -915,62 +881,6 @@ function CustomersTab() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!pointsCustomer} onOpenChange={(open) => { if (!open) setPointsCustomer(null); }}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>{t("إدارة النقاط", "Manage Points")}</DialogTitle></DialogHeader>
-          {pointsCustomer && (
-            <div className="space-y-4 mt-2">
-              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md">
-                <div>
-                  <p className="font-medium">{pointsCustomer.name || pointsCustomer.email}</p>
-                  <p className="text-sm text-muted-foreground">{pointsCustomer.email}</p>
-                </div>
-                <div className="text-end">
-                  <p className="text-sm text-muted-foreground">{t("الرصيد الحالي", "Current Balance")}</p>
-                  <p className="text-xl font-bold text-accent" data-testid="text-current-points">{pointsCustomer.points || 0}</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant={pointsAction === "add" ? "default" : "outline"} className="flex-1" onClick={() => setPointsAction("add")} data-testid="button-points-add">
-                  <Plus className="w-4 h-4" />
-                  <span className="ms-1">{t("إضافة", "Add")}</span>
-                </Button>
-                <Button variant={pointsAction === "subtract" ? "default" : "outline"} className="flex-1" onClick={() => setPointsAction("subtract")} data-testid="button-points-subtract">
-                  <Minus className="w-4 h-4" />
-                  <span className="ms-1">{t("خصم", "Subtract")}</span>
-                </Button>
-              </div>
-              <div>
-                <label className="text-sm font-medium">{t("عدد النقاط", "Points Amount")}</label>
-                <Input type="number" min="1" value={pointsAmount} onChange={(e) => setPointsAmount(e.target.value)} placeholder={t("أدخل عدد النقاط", "Enter points amount")} data-testid="input-points-amount" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">{t("السبب (اختياري)", "Reason (optional)")}</label>
-                <Input value={pointsReason} onChange={(e) => setPointsReason(e.target.value)} placeholder={t("مثال: مكافأة عميل مميز", "e.g. Loyal customer reward")} data-testid="input-points-reason" />
-              </div>
-              {pointsAmount && Number(pointsAmount) > 0 && (
-                <div className="p-3 bg-muted/30 rounded-md text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t("الرصيد الحالي", "Current")}</span>
-                    <span>{pointsCustomer.points || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{pointsAction === "add" ? t("إضافة", "Add") : t("خصم", "Subtract")}</span>
-                    <span>{pointsAction === "add" ? "+" : "-"}{pointsAmount}</span>
-                  </div>
-                  <div className="flex justify-between font-bold border-t mt-2 pt-2">
-                    <span>{t("الرصيد الجديد", "New Balance")}</span>
-                    <span data-testid="text-preview-points">{Math.max(0, pointsAction === "add" ? (pointsCustomer.points || 0) + Number(pointsAmount) : (pointsCustomer.points || 0) - Number(pointsAmount))}</span>
-                  </div>
-                </div>
-              )}
-              <Button className="w-full" disabled={!pointsAmount || Number(pointsAmount) <= 0 || updatePoints.isPending} onClick={() => updatePoints.mutate({ id: pointsCustomer.id, points: Number(pointsAmount), action: pointsAction, reason: pointsReason })} data-testid="button-submit-points">
-                {updatePoints.isPending ? <Loader2 className="animate-spin" /> : pointsAction === "add" ? t("إضافة النقاط", "Add Points") : t("خصم النقاط", "Subtract Points")}
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={!!historyCustomer} onOpenChange={(open) => { if (!open) { setHistoryCustomer(null); setCustomerOrders([]); } }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">

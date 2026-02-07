@@ -333,19 +333,6 @@ export async function registerRoutes(
 
       const order = await storage.updateOrderStatus(orderId, status);
 
-      if (status === "confirmed" && !existingOrder.pointsAwarded && existingOrder.userId) {
-        const orderTotal = Number(existingOrder.total) - Number(existingOrder.shippingPrice || 0);
-        const pointsToAward = Math.floor(orderTotal / 350);
-        if (pointsToAward > 0) {
-          const customer = await storage.getUser(existingOrder.userId);
-          if (customer) {
-            await storage.updateUser(customer.id, { points: customer.points + pointsToAward });
-            await storage.updateOrderPointsAwarded(orderId, true);
-            await logAdminAction(req, `Awarded ${pointsToAward} points`, "order", orderId);
-          }
-        }
-      }
-
       await logAdminAction(req, `Updated order status to ${status}`, "order", order.id);
       res.json(order);
     } catch (err) {
@@ -478,87 +465,6 @@ export async function registerRoutes(
       res.json({ updated: count });
     } catch (err) {
       res.status(400).json({ message: "Bulk update failed" });
-    }
-  });
-
-  // === POINTS REDEMPTION ===
-  app.post("/api/points/redeem", requireAuth, async (req, res) => {
-    try {
-      const user = req.user as User;
-      const freshUser = await storage.getUser(user.id);
-      if (!freshUser) return res.status(401).json({ message: "User not found" });
-
-      const { bookId, quantity } = req.body;
-      const book = await storage.getBook(bookId);
-      if (!book) return res.status(404).json({ message: "Book not found" });
-      if (!book.pointsPrice || book.pointsPrice <= 0) {
-        return res.status(400).json({ message: "This book cannot be redeemed with points" });
-      }
-
-      const qty = quantity || 1;
-      const pointsNeeded = book.pointsPrice * qty;
-      if (freshUser.points < pointsNeeded) {
-        return res.status(400).json({ message: "Not enough points", required: pointsNeeded, available: freshUser.points });
-      }
-
-      if (book.stock < qty) {
-        return res.status(400).json({ message: "Not enough stock" });
-      }
-
-      await storage.updateUser(freshUser.id, { points: freshUser.points - pointsNeeded });
-
-      const order = await storage.createOrder(
-        freshUser.id,
-        freshUser.name || freshUser.email,
-        freshUser.phone || "",
-        freshUser.address || "",
-        freshUser.city || "",
-        `Points redemption: ${pointsNeeded} points used`,
-        0,
-        [{ bookId: book.id, quantity: qty, unitPrice: 0 }],
-        undefined, undefined, undefined, 0
-      );
-
-      await storage.updateOrderPointsAwarded(order.id, true);
-      await storage.updateOrderPointsUsed(order.id, pointsNeeded);
-      await storage.updateBook(book.id, { stock: book.stock - qty });
-
-      res.json({ message: "Points redeemed successfully", pointsUsed: pointsNeeded, remainingPoints: freshUser.points - pointsNeeded, order });
-    } catch (err) {
-      res.status(400).json({ message: "Redemption failed" });
-    }
-  });
-
-  // === ADMIN POINTS MANAGEMENT ===
-  app.put("/api/admin/customers/:id/points", requireAdmin, async (req, res) => {
-    try {
-      const id = Number(req.params.id);
-      const body = req.body || {};
-      const { points, action, reason } = body;
-      const amount = Number(points);
-      if (isNaN(amount) || amount < 0) {
-        return res.status(400).json({ message: "Invalid points value" });
-      }
-      const customer = await storage.getUser(id);
-      if (!customer) return res.status(404).json({ message: "Customer not found" });
-
-      let newPoints: number;
-      let logMsg: string;
-      if (action === "add") {
-        newPoints = customer.points + amount;
-        logMsg = `Added ${amount} points (${reason || "no reason"})`;
-      } else if (action === "subtract") {
-        newPoints = Math.max(0, customer.points - amount);
-        logMsg = `Subtracted ${amount} points (${reason || "no reason"})`;
-      } else {
-        newPoints = amount;
-        logMsg = `Set points to ${amount} (${reason || "no reason"})`;
-      }
-      const user = await storage.updateUser(id, { points: newPoints });
-      await logAdminAction(req, logMsg, "user", id, user.email);
-      res.json({ ...user, password: undefined });
-    } catch (err) {
-      res.status(400).json({ message: "Update failed" });
     }
   });
 

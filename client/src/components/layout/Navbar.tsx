@@ -12,7 +12,6 @@ import {
   LayoutDashboard,
   Menu,
   UserPlus,
-  Award,
   User as UserIcon
 } from "lucide-react";
 import { useState } from "react";
@@ -72,11 +71,6 @@ export function Navbar() {
 
           {user ? (
             <>
-              <div className="flex items-center gap-1 text-primary-foreground/90 text-sm" data-testid="text-user-points">
-                <Award className="w-4 h-4 text-yellow-400" />
-                <span className="font-bold">{(user as any).points || 0}</span>
-                <span className="hidden lg:inline text-xs">{t("نقطة", "pts")}</span>
-              </div>
               <Link href="/account">
                 <Button variant="ghost" size="sm" className="gap-2 text-primary-foreground hover:bg-primary-foreground/10" data-testid="link-account">
                   <UserIcon className="w-4 h-4" />
@@ -157,11 +151,6 @@ export function Navbar() {
                   </Button>
                   {user ? (
                     <>
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted" data-testid="text-mobile-points">
-                        <Award className="w-4 h-4 text-yellow-500" />
-                        <span className="font-bold">{(user as any).points || 0}</span>
-                        <span className="text-xs text-muted-foreground">{t("نقطة", "points")}</span>
-                      </div>
                       <Link href="/account" onClick={() => setIsOpen(false)}>
                         <Button variant="secondary" className="w-full justify-start gap-2">
                           <UserIcon className="w-4 h-4" />

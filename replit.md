@@ -36,7 +36,7 @@ The project follows a monorepo pattern with three top-level directories:
 - `/books/:id` — Individual book detail page
 - `/login` — Authentication page
 - `/signup` — Registration page
-- `/account` — Customer dashboard (profile editing, order history, loyalty points)
+- `/account` — Customer dashboard (profile editing, order history)
 - `/checkout` — Checkout page (requires login)
 - `/admin` — Admin dashboard for CRUD operations on books (admin/employee roles)
 
@@ -62,8 +62,6 @@ The project follows a monorepo pattern with three top-level directories:
 - `GET /api/shipping/wilayas` — List all wilayas with shipping prices
 - `PUT /api/admin/shipping/wilayas/:id` — Update wilaya shipping price or active status
 - `PUT /api/admin/shipping/wilayas` — Bulk update all wilayas with default price
-- `POST /api/points/redeem` — Redeem a book using loyalty points (requires auth)
-- `PUT /api/admin/customers/:id/points` — Admin set customer points
 - CRUD endpoints for orders, categories, customers (admin)
 
 ### Database
@@ -75,7 +73,7 @@ The project follows a monorepo pattern with three top-level directories:
 
 **Tables**:
 - `users` — id, email (unique, acts as username), password (hashed), role ('admin'|'user'), name, phone, address, city, enabled, createdAt
-- `books` — id, titleAr, titleEn, author, descriptionAr, descriptionEn, price (DZD currency), category, image (URL), language ('ar'|'en'|'both'), published (boolean), isbn, stock, pointsPrice (nullable integer - loyalty points needed to redeem book for free), createdAt
+- `books` — id, titleAr, titleEn, author, descriptionAr, descriptionEn, price (DZD currency), category, image (URL), language ('ar'|'en'|'both'), published (boolean), isbn, stock, createdAt
 - `wilayas` — id, code (unique), nameAr, nameEn, shippingPrice (DZD), isActive
 - `orders` — id, userId, customerName, phone, address, city, wilayaCode, wilayaName, baladiya, shippingPrice, status, total, notes, createdAt
 - `order_items` — id, orderId, bookId, quantity, unitPrice

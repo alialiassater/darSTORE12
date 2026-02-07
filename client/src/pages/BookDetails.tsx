@@ -5,14 +5,8 @@ import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Share2, Heart, ArrowLeft, ArrowRight, Award, Loader2 } from "lucide-react";
+import { ShoppingCart, Share2, Heart, ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
-import { api } from "@shared/routes";
 
 export default function BookDetails() {
   const [, params] = useRoute("/books/:id");
@@ -21,37 +15,7 @@ export default function BookDetails() {
   const { t, language, dir } = useLanguage();
   const { addToCart } = useCart();
   const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [, navigate] = useLocation();
-  const [showRedeemConfirm, setShowRedeemConfirm] = useState(false);
-
-  const redeemMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/points/redeem", { bookId: id, quantity: 1 });
-      return res.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: [api.auth.me.path] });
-      queryClient.invalidateQueries({ queryKey: ["/api/books", id] });
-      toast({
-        title: t("تم الاسترداد بنجاح!", "Redeemed Successfully!"),
-        description: t(
-          `تم خصم ${data.pointsUsed} نقطة. رصيدك المتبقي: ${data.remainingPoints} نقطة`,
-          `${data.pointsUsed} points deducted. Remaining: ${data.remainingPoints} points`
-        ),
-      });
-      setShowRedeemConfirm(false);
-    },
-    onError: (error: any) => {
-      toast({
-        title: t("فشل الاسترداد", "Redemption Failed"),
-        description: error.message,
-        variant: "destructive",
-      });
-      setShowRedeemConfirm(false);
-    },
-  });
 
   if (isLoading) {
     return (
@@ -78,9 +42,6 @@ export default function BookDetails() {
       </div>
     );
   }
-
-  const userPoints = (user as any)?.points || 0;
-  const canRedeem = book.pointsPrice && book.pointsPrice > 0 && user && userPoints >= book.pointsPrice;
 
   return (
     <div className="min-h-screen bg-background py-12 page-transition">
@@ -112,12 +73,6 @@ export default function BookDetails() {
                 <span className="bg-accent/10 text-accent px-3 py-1 rounded-full text-sm font-semibold tracking-wide">
                   {book.category}
                 </span>
-                {book.pointsPrice && book.pointsPrice > 0 && (
-                  <Badge variant="secondary" className="gap-1 no-default-hover-elevate no-default-active-elevate">
-                    <Award className="w-3 h-3 text-yellow-500" />
-                    {book.pointsPrice} {t("نقطة", "pts")}
-                  </Badge>
-                )}
               </div>
 
               <h1 className="text-3xl md:text-5xl font-serif font-bold text-primary mb-4 leading-tight" data-testid="text-book-title">
@@ -136,85 +91,39 @@ export default function BookDetails() {
                 <p>{language === "ar" ? book.descriptionAr : book.descriptionEn}</p>
               </div>
 
-              {book.pointsPrice && book.pointsPrice > 0 && (
-                <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-md p-4 mb-6" data-testid="card-points-redeem">
-                  <div className="flex items-center gap-3">
-                    <Award className="w-6 h-6 text-yellow-600 shrink-0" />
-                    <div className="flex-1">
-                      <p className="font-bold text-sm">
-                        {t("احصل عليه مجانا بالنقاط!", "Get it free with points!")}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {t(
-                          `يتطلب ${book.pointsPrice} نقطة`,
-                          `Requires ${book.pointsPrice} points`
-                        )}
-                        {user && (
-                          <span> — {t(`رصيدك: ${userPoints} نقطة`, `Your balance: ${userPoints} pts`)}</span>
-                        )}
-                      </p>
-                    </div>
-                    {!user ? (
-                      <Button variant="outline" size="sm" onClick={() => navigate("/login")} data-testid="button-login-to-redeem">
-                        {t("سجل دخول", "Login")}
-                      </Button>
-                    ) : !showRedeemConfirm ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={!canRedeem}
-                        onClick={() => setShowRedeemConfirm(true)}
-                        className="gap-1"
-                        data-testid="button-redeem-points"
-                      >
-                        <Award className="w-4 h-4" />
-                        {canRedeem
-                          ? t("استبدل بالنقاط", "Redeem")
-                          : t("نقاط غير كافية", "Not enough pts")}
-                      </Button>
-                    ) : (
-                      <div className="flex gap-2">
-                        <Button
-                          variant="default"
-                          size="sm"
-                          disabled={redeemMutation.isPending}
-                          onClick={() => redeemMutation.mutate()}
-                          data-testid="button-confirm-redeem"
-                        >
-                          {redeemMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("تأكيد", "Confirm")}
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => setShowRedeemConfirm(false)} data-testid="button-cancel-redeem">
-                          {t("إلغاء", "Cancel")}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
               <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t">
                 <Button size="lg" className="flex-1 gap-2 text-lg" onClick={() => addToCart(book)} data-testid="button-add-to-cart">
                   <ShoppingCart className="w-5 h-5" />
                   {t("أضف إلى السلة", "Add to Cart")}
                 </Button>
                 <div className="flex gap-4">
-                  <Button size="icon" variant="outline">
-                    <Heart className="w-5 h-5" />
-                  </Button>
-                  <Button size="icon" variant="outline">
+                  <Button variant="outline" size="lg" data-testid="button-share">
                     <Share2 className="w-5 h-5" />
+                  </Button>
+                  <Button variant="outline" size="lg" data-testid="button-wishlist">
+                    <Heart className="w-5 h-5" />
                   </Button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mt-12 text-sm text-muted-foreground">
+              <div className="mt-10 grid grid-cols-2 gap-4 text-sm">
+                {book.isbn && (
+                  <div>
+                    <span className="text-muted-foreground">{t("الرقم المعياري:", "ISBN:")}</span>{" "}
+                    <span className="font-medium" data-testid="text-book-isbn">{book.isbn}</span>
+                  </div>
+                )}
                 <div>
-                  <span className="font-bold block mb-1">{t("الرقم المعياري:", "ISBN:")}</span>
-                  {book.isbn || "-"}
+                  <span className="text-muted-foreground">{t("اللغة:", "Language:")}</span>{" "}
+                  <span className="font-medium" data-testid="text-book-language">
+                    {book.language === "ar" ? t("العربية", "Arabic") : book.language === "en" ? t("الإنجليزية", "English") : t("ثنائي اللغة", "Bilingual")}
+                  </span>
                 </div>
                 <div>
-                  <span className="font-bold block mb-1">{t("اللغة:", "Language:")}</span>
-                  {book.language === "ar" ? "العربية" : book.language === "en" ? "English" : "Bilingual"}
+                  <span className="text-muted-foreground">{t("المخزون:", "Stock:")}</span>{" "}
+                  <span className={`font-medium ${book.stock > 0 ? "text-green-600" : "text-destructive"}`} data-testid="text-book-stock">
+                    {book.stock > 0 ? t("متوفر", "Available") : t("نفذ المخزون", "Out of stock")}
+                  </span>
                 </div>
               </div>
             </div>

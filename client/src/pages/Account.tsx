@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Award, User as UserIcon, Package, MapPin, Phone, Mail, Loader2, Eye, EyeOff, ShoppingBag, Clock, CheckCircle2, Truck, XCircle } from "lucide-react";
+import { User as UserIcon, Package, MapPin, Phone, Mail, Loader2, Eye, EyeOff, ShoppingBag, Clock, CheckCircle2, Truck, XCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { api } from "@shared/routes";
 import type { OrderWithItems } from "@shared/schema";
@@ -145,20 +145,6 @@ export default function Account() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card data-testid="card-points">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-md">
-                  <Award className="w-6 h-6 text-yellow-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t("نقاط الولاء", "Loyalty Points")}</p>
-                  <p className="text-2xl font-bold" data-testid="text-account-points">{(user as any).points || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           <Card data-testid="card-orders-count">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">

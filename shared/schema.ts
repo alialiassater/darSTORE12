@@ -12,7 +12,6 @@ export const users = pgTable("users", {
   address: text("address"),
   city: text("city"),
   enabled: boolean("enabled").default(true).notNull(),
-  points: integer("points").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -38,7 +37,6 @@ export const books = pgTable("books", {
   published: boolean("published").default(true).notNull(),
   isbn: text("isbn"),
   stock: integer("stock").default(0).notNull(),
-  pointsPrice: integer("points_price"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -65,8 +63,6 @@ export const orders = pgTable("orders", {
   status: text("status").default("pending").notNull(),
   total: numeric("total").notNull(),
   notes: text("notes"),
-  pointsAwarded: boolean("points_awarded").default(false).notNull(),
-  pointsUsed: integer("points_used").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
