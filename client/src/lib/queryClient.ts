@@ -6,12 +6,20 @@ export function apiUrl(path: string): string {
   if (path.startsWith("http")) return path;
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
   
-  // If we're on the production domain, use relative paths
+  // Always use absolute URL for development/Replit to ensure it hits the backend
+  if (import.meta.env.DEV) {
+    return cleanPath;
+  }
+
+  // If we're on the production domain, use relative paths if needed, 
+  // but generally API_BASE (Render URL) is safer for cross-origin
   if (window.location.hostname === "daralibenzid.dz" || window.location.hostname === "www.daralibenzid.dz") {
+    // If the frontend is on Hostdz and backend on Render, we MUST use API_BASE
+    if (API_BASE) return API_BASE + cleanPath;
     return cleanPath;
   }
   
-  return API_BASE + cleanPath;
+  return (API_BASE || "") + cleanPath;
 }
 
 async function throwIfResNotOk(res: Response) {

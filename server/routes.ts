@@ -49,20 +49,27 @@ export async function registerRoutes(
     "https://www.daralibenzid.dz",
     "http://daralibenzid.dz",
     "http://www.daralibenzid.dz",
+    "https://darstore12.onrender.com",
     "http://localhost:5000",
     "http://localhost:5173",
+    "http://127.0.0.1:5000",
+    "http://127.0.0.1:5173",
   ];
   app.use(cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl)
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin) || origin.includes("replit.dev") || origin.includes("replit.app")) {
+      const isAllowed = allowedOrigins.includes(origin) || 
+                       origin.includes("replit.dev") || 
+                       origin.includes("replit.app") ||
+                       origin.includes("onrender.com");
+
+      if (isAllowed) {
         callback(null, true);
       } else {
-        // Log the rejected origin to help debugging
         console.log("CORS rejected origin:", origin);
-        callback(null, true); // Fallback to true for development/replit environment
+        callback(null, true); // Fallback to true for development
       }
     },
     credentials: true,
