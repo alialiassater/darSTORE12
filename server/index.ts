@@ -2,7 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import { registerRoutes } from "./routes";
 import path from "path";
-import { fileURLToPath } from "url";
+import fs from "fs";
 
 const app = express();
 app.use(express.json());
@@ -16,13 +16,19 @@ const httpServer = createServer(app);
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
   } else {
-    const __dirname = typeof import.meta.dirname === "string"
-      ? import.meta.dirname
-      : path.dirname(fileURLToPath(import.meta.url));
-    const distPath = path.resolve(__dirname, "public");
+    const serverDir = import.meta.dirname ?? path.dirname(new URL(import.meta.url).pathname);
+    let distPath = path.resolve(serverDir, "public");
+    if (!fs.existsSync(distPath)) {
+      distPath = path.resolve(serverDir, "..", "dist", "public");
+    }
     app.use(express.static(distPath));
     app.use("/{*path}", (_req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+      const indexFile = path.join(distPath, "index.html");
+      if (fs.existsSync(indexFile)) {
+        res.sendFile(indexFile);
+      } else {
+        res.status(503).json({ error: "Frontend not built. Run: npm run build" });
+      }
     });
   }
 
