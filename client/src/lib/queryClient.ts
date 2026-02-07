@@ -8,7 +8,9 @@ export function apiUrl(path: string): string {
   
   // Only use API_BASE for /api/ routes
   if (cleanPath.startsWith("/api/") && API_BASE) {
-    return API_BASE + cleanPath;
+    // Ensure no double slashes
+    const base = API_BASE.endsWith("/") ? API_BASE.slice(0, -1) : API_BASE;
+    return base + cleanPath;
   }
   
   // Use relative path for all other assets (logo.png, etc)

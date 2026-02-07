@@ -65,7 +65,17 @@ export async function registerRoutes(
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
   }));
-  app.options("*", cors()); // Handle preflight for all routes
+  // Using a middleware for OPTIONS instead of app.options to avoid pathToRegexp issues
+  app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') {
+      res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
+      res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept, Origin");
+      res.header("Access-Control-Allow-Credentials", "true");
+      return res.sendStatus(200);
+    }
+    next();
+  });
 
   const { hashPassword } = setupAuth(app);
 
