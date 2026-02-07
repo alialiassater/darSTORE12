@@ -57,17 +57,17 @@ export async function registerRoutes(
   ];
   app.use(cors({
     origin: (origin, callback) => {
-      // Log the origin for debugging
-      if (origin) console.log("Incoming request from origin:", origin);
+      // Allow all origins for simplicity and to avoid CORS issues
       callback(null, true);
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
   }));
-  // Using a middleware for OPTIONS instead of app.options to avoid pathToRegexp issues
+
+  // Manual preflight handler to avoid Express 5 path-to-regexp issues
   app.use((req, res, next) => {
-    if (req.method === 'OPTIONS') {
+    if (req.method === "OPTIONS") {
       res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
       res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
       res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept, Origin");

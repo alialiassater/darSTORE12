@@ -33,7 +33,7 @@ export function setupAuth(app: Express) {
     cookie: {
       secure: isProduction,
       httpOnly: true,
-      sameSite: "none" as const, // Always use "none" for cross-domain sessions
+      sameSite: "none" as const,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   };
