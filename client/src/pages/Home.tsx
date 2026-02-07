@@ -38,7 +38,7 @@ export default function Home() {
           </h1>
           <p className="text-lg md:text-xl text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-sm font-medium">
             {t(
-              "دار علي بن زيد للطباعة والنشر تقدم لك نخبة من أفضل الكتب العربية والعالمية. تصفح اصداراتنا .",
+              "دار علي بن زيد للطباعة والنشر تقدم لكم نخبة من أفضل الكتب العربية والعالمية. تصفح اصداراتنا .",
               "Dar Ali BenZid for Printing & Publishing offers you a selection of the best Arabic and international books. Browse our carefully curated collection."
             )}
           </p>
@@ -96,7 +96,7 @@ export default function Home() {
                 {t("كتب مختارة", "Featured Books")}
               </h2>
               <p className="text-muted-foreground">
-                {t("أحدث الإضافات إلى مكتبتنا", "Latest additions to our library")}
+                {t("أحدث الإضافات إلى دار النشر", "Latest additions to our library")}
               </p>
             </div>
             <Link href="/store">
