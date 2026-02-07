@@ -41,8 +41,8 @@ export default function Home() {
           </h1>
           <p className="text-lg md:text-xl text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-sm font-medium">
             {t(
-              "دار علي بن زيد للطباعة والنشر تقدم لكم نخبة من أفضل الكتب العربية والعالمية. تصفح اصداراتنا .",
-              "Dar Ali BenZid for Printing & Publishing offers you a selection of the best Arabic and international books. Browse our carefully curated collection.",
+              "دار علي بن زيد للطباعة والنشر تقدم لكم نخبة من أفضل الكتب العربية والعالمية. تصفحوا اصداراتنا .",
+              "Dar Ali BenZid for Printing & Publishing offers لكم a selection of the best Arabic and international books. Browse our carefully curated collection.",
             )}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -123,7 +123,7 @@ export default function Home() {
               <p className="text-muted-foreground">
                 {t(
                   " أحدث الإضافات إلى دار النشر",
-                  "Latest additions to our library",
+                  "Latest additions to our publishing house",
                 )}
               </p>
             </div>
