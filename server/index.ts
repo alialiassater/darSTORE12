@@ -2,6 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import { registerRoutes } from "./routes";
 import path from "path";
+import { fileURLToPath } from "url";
 
 const app = express();
 app.use(express.json());
@@ -15,7 +16,10 @@ const httpServer = createServer(app);
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
   } else {
-    const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
+    const __dirname = typeof import.meta.dirname === "string"
+      ? import.meta.dirname
+      : path.dirname(fileURLToPath(import.meta.url));
+    const distPath = path.resolve(__dirname, "public");
     app.use(express.static(distPath));
     app.use("/{*path}", (_req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
