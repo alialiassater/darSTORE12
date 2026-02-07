@@ -85,40 +85,6 @@ export const activityLogs = pgTable("activity_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const sitePages = pgTable("site_pages", {
-  id: serial("id").primaryKey(),
-  slug: text("slug").notNull().unique(),
-  titleAr: text("title_ar").notNull().default(""),
-  titleEn: text("title_en").notNull().default(""),
-  contentAr: text("content_ar").notNull().default(""),
-  contentEn: text("content_en").notNull().default(""),
-  imageUrl: text("image_url"),
-  extraData: text("extra_data"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const reviews = pgTable("reviews", {
-  id: serial("id").primaryKey(),
-  bookId: integer("book_id").notNull(),
-  userId: integer("user_id"),
-  userName: text("user_name").notNull(),
-  rating: integer("rating").notNull(),
-  comment: text("comment"),
-  approved: boolean("approved").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const blogPosts = pgTable("blog_posts", {
-  id: serial("id").primaryKey(),
-  titleAr: text("title_ar").notNull(),
-  titleEn: text("title_en").notNull(),
-  contentAr: text("content_ar").notNull(),
-  contentEn: text("content_en").notNull(),
-  imageUrl: text("image_url"),
-  published: boolean("published").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
 // === INSERT SCHEMAS ===
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -171,22 +137,6 @@ export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
   createdAt: true,
 });
 
-export const insertSitePageSchema = createInsertSchema(sitePages).omit({
-  id: true,
-  updatedAt: true,
-});
-
-export const insertReviewSchema = z.object({
-  bookId: z.number(),
-  rating: z.number().min(1).max(5),
-  comment: z.string().optional(),
-});
-
-export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({
-  id: true,
-  createdAt: true,
-});
-
 // === TYPES ===
 
 export type User = typeof users.$inferSelect;
@@ -208,15 +158,6 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 
 export type ActivityLog = typeof activityLogs.$inferSelect;
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
-
-export type SitePage = typeof sitePages.$inferSelect;
-export type InsertSitePage = z.infer<typeof insertSitePageSchema>;
-
-export type Review = typeof reviews.$inferSelect;
-export type InsertReview = z.infer<typeof insertReviewSchema>;
-
-export type BlogPost = typeof blogPosts.$inferSelect;
-export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
 
 export type UpdateBookRequest = Partial<InsertBook>;
 export type BookResponse = Book;

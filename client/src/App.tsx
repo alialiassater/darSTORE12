@@ -14,9 +14,6 @@ import Signup from "@/pages/Signup";
 import Checkout from "@/pages/Checkout";
 import Admin from "@/pages/Admin";
 import Account from "@/pages/Account";
-import About from "@/pages/About";
-import Blog from "@/pages/Blog";
-import BlogPostPage from "@/pages/BlogPost";
 import NotFound from "@/pages/not-found";
 import { Navbar } from "@/components/layout/Navbar";
 import { CartDrawer } from "@/components/layout/CartDrawer";
@@ -32,9 +29,6 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/store" component={Store} />
           <Route path="/books/:id" component={BookDetails} />
-          <Route path="/about" component={About} />
-          <Route path="/blog" component={Blog} />
-          <Route path="/blog/:id" component={BlogPostPage} />
           <Route path="/login" component={Login} />
           <Route path="/signup" component={Signup} />
           <Route path="/checkout" component={Checkout} />

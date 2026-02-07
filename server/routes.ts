@@ -3,31 +3,11 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, hashPassword } from "./auth";
 import { api } from "@shared/routes";
-import { insertOrderSchema, insertReviewSchema } from "@shared/schema";
+import { insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
 import passport from "passport";
 import type { User } from "@shared/schema";
 import { algerianWilayas } from "@shared/algeria-data";
-import multer from "multer";
-import path from "path";
-import { randomUUID } from "crypto";
-
-const uploadDir = path.join(process.cwd(), "client", "public", "uploads");
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, uploadDir),
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname);
-      cb(null, `${randomUUID()}${ext}`);
-    },
-  }),
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    const allowed = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, allowed.includes(ext));
-  },
-});
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated()) {
@@ -502,102 +482,6 @@ export async function registerRoutes(
       storage.totalRevenue(),
     ]);
     res.json({ totalBooks, totalOrders, totalCustomers, lowStockBooks, revenue });
-  });
-
-  // === FILE UPLOAD ===
-  app.post("/api/upload", requireAdmin, upload.single("file"), (req, res) => {
-    if (!req.file) return res.status(400).json({ message: "No file uploaded or invalid file type" });
-    const url = `/uploads/${req.file.filename}`;
-    res.json({ url });
-  });
-
-  // === SITE PAGES (About, etc.) ===
-  app.get("/api/pages/:slug", async (req, res) => {
-    const page = await storage.getPageBySlug(req.params.slug);
-    if (!page) return res.status(404).json({ message: "Page not found" });
-    res.json(page);
-  });
-
-  app.put("/api/admin/pages/:slug", requireAdmin, async (req, res) => {
-    try {
-      const page = await storage.upsertPage(req.params.slug, req.body);
-      await logAdminAction(req, `Updated page: ${req.params.slug}`, "page");
-      res.json(page);
-    } catch (err) {
-      res.status(400).json({ message: "Update failed" });
-    }
-  });
-
-  // === REVIEWS ===
-  app.get("/api/books/:id/reviews", async (req, res) => {
-    const bookId = Number(req.params.id);
-    const bookReviews = await storage.getReviewsByBook(bookId);
-    const summary = await storage.getBookRatingSummary(bookId);
-    res.json({ reviews: bookReviews, summary });
-  });
-
-  app.post("/api/books/:id/reviews", requireAuth, async (req, res) => {
-    try {
-      const bookId = Number(req.params.id);
-      const user = req.user as User;
-      const input = insertReviewSchema.parse({ ...req.body, bookId });
-      const review = await storage.createReview(bookId, user.id, user.name || user.email, input.rating, input.comment);
-      res.status(201).json(review);
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
-      res.status(400).json({ message: "Failed to submit review" });
-    }
-  });
-
-  app.delete("/api/admin/reviews/:id", requireAdmin, async (req, res) => {
-    await storage.deleteReview(Number(req.params.id));
-    await logAdminAction(req, "Deleted review", "review", Number(req.params.id));
-    res.status(204).send();
-  });
-
-  app.get("/api/books/ratings/all", async (_req, res) => {
-    const ratings = await storage.getAllBookRatings();
-    res.json(ratings);
-  });
-
-  // === BLOG ===
-  app.get("/api/blog", async (req, res) => {
-    const publishedOnly = req.query.published !== "false";
-    const posts = await storage.getBlogPosts(publishedOnly);
-    res.json(posts);
-  });
-
-  app.get("/api/blog/:id", async (req, res) => {
-    const post = await storage.getBlogPost(Number(req.params.id));
-    if (!post) return res.status(404).json({ message: "Post not found" });
-    res.json(post);
-  });
-
-  app.post("/api/admin/blog", requireAdmin, async (req, res) => {
-    try {
-      const post = await storage.createBlogPost(req.body);
-      await logAdminAction(req, "Created blog post", "blog", post.id, post.titleEn);
-      res.status(201).json(post);
-    } catch (err) {
-      res.status(400).json({ message: "Creation failed" });
-    }
-  });
-
-  app.put("/api/admin/blog/:id", requireAdmin, async (req, res) => {
-    try {
-      const post = await storage.updateBlogPost(Number(req.params.id), req.body);
-      await logAdminAction(req, "Updated blog post", "blog", post.id, post.titleEn);
-      res.json(post);
-    } catch (err) {
-      res.status(400).json({ message: "Update failed" });
-    }
-  });
-
-  app.delete("/api/admin/blog/:id", requireAdmin, async (req, res) => {
-    const id = Number(req.params.id);
-    await storage.deleteBlogPost(id);
-    await logAdminAction(req, "Deleted blog post", "blog", id);
-    res.status(204).send();
   });
 
   // Seed
