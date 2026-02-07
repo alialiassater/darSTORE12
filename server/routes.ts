@@ -95,20 +95,18 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/", (_req, res) => {
-    res.json({ status: "ok", message: "Dar Ali BenZid API is running" });
-  });
-
   app.post(api.auth.login.path, (req, res, next) => {
-    console.log("Login attempt, body keys:", Object.keys(req.body || {}));
+    const body = req.body || {};
+    console.log("Login attempt, body keys:", Object.keys(body));
     // Normalize: accept either 'username' or 'email' field
-    if (req.body.email && !req.body.username) {
-      req.body.username = req.body.email;
+    if (body.email && !body.username) {
+      body.username = body.email;
     }
-    if (!req.body.username || !req.body.password) {
-      console.log("Login rejected: missing fields", { hasUsername: !!req.body.username, hasPassword: !!req.body.password });
+    if (!body.username || !body.password) {
+      console.log("Login rejected: missing fields", { hasUsername: !!body.username, hasPassword: !!body.password });
       return res.status(400).json({ message: "Email and password are required" });
     }
+    req.body = body;
     next();
   }, (req, res, next) => {
     passport.authenticate("local", (err: any, user: any, info: any) => {

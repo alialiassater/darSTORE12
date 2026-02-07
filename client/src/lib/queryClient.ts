@@ -6,14 +6,11 @@ export function apiUrl(path: string): string {
   if (path.startsWith("http")) return path;
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
   
-  // Only use API_BASE for /api/ routes
   if (cleanPath.startsWith("/api/") && API_BASE) {
-    // Ensure no double slashes
     const base = API_BASE.endsWith("/") ? API_BASE.slice(0, -1) : API_BASE;
     return base + cleanPath;
   }
   
-  // Use relative path for all other assets (logo.png, etc)
   return cleanPath;
 }
 
