@@ -83,9 +83,12 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["'Cairo'", "sans-serif"],
+        sans: ["'MCS Sky'", "'Cairo'", "sans-serif"],
         serif: ["'Amiri'", "serif"],
         mono: ["var(--font-mono)"],
+      },
+      fontSize: {
+        base: ["30px", { lineHeight: "1.5" }],
       },
       keyframes: {
         "accordion-down": {

@@ -62,7 +62,7 @@ export async function registerRoutes(
   const { hashPassword } = setupAuth(app);
 
   // Health check endpoint
-  app.get("/", (_req, res) => {
+  app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", message: "Dar Ali BenZid API is running" });
   });
 
