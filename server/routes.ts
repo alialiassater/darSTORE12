@@ -532,9 +532,29 @@ export async function registerRoutes(
   app.put("/api/admin/customers/:id/points", requireAdmin, async (req, res) => {
     try {
       const id = Number(req.params.id);
-      const { points } = req.body;
-      const user = await storage.updateUser(id, { points: Number(points) });
-      await logAdminAction(req, `Set points to ${points}`, "user", id, user.email);
+      const body = req.body || {};
+      const { points, action, reason } = body;
+      const amount = Number(points);
+      if (isNaN(amount) || amount < 0) {
+        return res.status(400).json({ message: "Invalid points value" });
+      }
+      const customer = await storage.getUser(id);
+      if (!customer) return res.status(404).json({ message: "Customer not found" });
+
+      let newPoints: number;
+      let logMsg: string;
+      if (action === "add") {
+        newPoints = customer.points + amount;
+        logMsg = `Added ${amount} points (${reason || "no reason"})`;
+      } else if (action === "subtract") {
+        newPoints = Math.max(0, customer.points - amount);
+        logMsg = `Subtracted ${amount} points (${reason || "no reason"})`;
+      } else {
+        newPoints = amount;
+        logMsg = `Set points to ${amount} (${reason || "no reason"})`;
+      }
+      const user = await storage.updateUser(id, { points: newPoints });
+      await logAdminAction(req, logMsg, "user", id, user.email);
       res.json({ ...user, password: undefined });
     } catch (err) {
       res.status(400).json({ message: "Update failed" });
