@@ -57,11 +57,15 @@ export async function registerRoutes(
   ];
   app.use(cors({
     origin: (origin, callback) => {
-      // ALWAYS allow in development or on Hostdz/Render domains
+      // Log the origin for debugging
+      if (origin) console.log("Incoming request from origin:", origin);
       callback(null, true);
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
   }));
+  app.options("*", cors()); // Handle preflight for all routes
 
   const { hashPassword } = setupAuth(app);
 

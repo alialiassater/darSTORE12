@@ -6,11 +6,12 @@ export function apiUrl(path: string): string {
   if (path.startsWith("http")) return path;
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
   
-  // If we have an API_BASE (Render URL), we MUST use it for cross-origin
-  if (API_BASE) {
+  // Only use API_BASE for /api/ routes
+  if (cleanPath.startsWith("/api/") && API_BASE) {
     return API_BASE + cleanPath;
   }
   
+  // Use relative path for all other assets (logo.png, etc)
   return cleanPath;
 }
 
