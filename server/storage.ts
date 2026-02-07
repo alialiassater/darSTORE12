@@ -1,14 +1,18 @@
 import { db } from "./db";
 import {
   users, books, categories, orders, orderItems, activityLogs, wilayas,
+  sitePages, reviews, blogPosts,
   type User, type InsertUser,
   type Book, type InsertBook, type UpdateBookRequest,
   type Category, type InsertCategory,
   type Order, type OrderItem, type OrderWithItems,
   type Wilaya, type InsertWilaya,
-  type ActivityLog, type InsertActivityLog
+  type ActivityLog, type InsertActivityLog,
+  type SitePage, type InsertSitePage,
+  type Review,
+  type BlogPost, type InsertBlogPost
 } from "@shared/schema";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, and, avg } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -59,6 +63,21 @@ export interface IStorage {
 
   logActivity(log: InsertActivityLog): Promise<ActivityLog>;
   getActivityLogs(limit?: number): Promise<ActivityLog[]>;
+
+  getPageBySlug(slug: string): Promise<SitePage | undefined>;
+  upsertPage(slug: string, data: Partial<InsertSitePage>): Promise<SitePage>;
+
+  getReviewsByBook(bookId: number): Promise<Review[]>;
+  createReview(bookId: number, userId: number | null, userName: string, rating: number, comment?: string): Promise<Review>;
+  deleteReview(id: number): Promise<void>;
+  getBookRatingSummary(bookId: number): Promise<{ avg: number; count: number }>;
+  getAllBookRatings(): Promise<Record<number, { avg: number; count: number }>>;
+
+  getBlogPosts(publishedOnly?: boolean): Promise<BlogPost[]>;
+  getBlogPost(id: number): Promise<BlogPost | undefined>;
+  createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
+  updateBlogPost(id: number, updates: Partial<InsertBlogPost>): Promise<BlogPost>;
+  deleteBlogPost(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -293,6 +312,82 @@ export class DatabaseStorage implements IStorage {
 
   async getActivityLogs(limit = 100): Promise<ActivityLog[]> {
     return db.select().from(activityLogs).orderBy(desc(activityLogs.createdAt)).limit(limit);
+  }
+
+  async getPageBySlug(slug: string): Promise<SitePage | undefined> {
+    const [page] = await db.select().from(sitePages).where(eq(sitePages.slug, slug));
+    return page;
+  }
+
+  async upsertPage(slug: string, data: Partial<InsertSitePage>): Promise<SitePage> {
+    const existing = await this.getPageBySlug(slug);
+    if (existing) {
+      const [updated] = await db.update(sitePages).set({ ...data, updatedAt: new Date() }).where(eq(sitePages.slug, slug)).returning();
+      return updated;
+    }
+    const [created] = await db.insert(sitePages).values({ slug, ...data } as any).returning();
+    return created;
+  }
+
+  async getReviewsByBook(bookId: number): Promise<Review[]> {
+    return db.select().from(reviews).where(and(eq(reviews.bookId, bookId), eq(reviews.approved, true))).orderBy(desc(reviews.createdAt));
+  }
+
+  async createReview(bookId: number, userId: number | null, userName: string, rating: number, comment?: string): Promise<Review> {
+    const [review] = await db.insert(reviews).values({ bookId, userId, userName, rating, comment: comment || null }).returning();
+    return review;
+  }
+
+  async deleteReview(id: number): Promise<void> {
+    await db.delete(reviews).where(eq(reviews.id, id));
+  }
+
+  async getBookRatingSummary(bookId: number): Promise<{ avg: number; count: number }> {
+    const result = await db.select({
+      avg: sql<number>`COALESCE(AVG(${reviews.rating}), 0)::numeric`,
+      count: sql<number>`count(*)::int`,
+    }).from(reviews).where(and(eq(reviews.bookId, bookId), eq(reviews.approved, true)));
+    return { avg: Number(result[0]?.avg ?? 0), count: result[0]?.count ?? 0 };
+  }
+
+  async getAllBookRatings(): Promise<Record<number, { avg: number; count: number }>> {
+    const result = await db.select({
+      bookId: reviews.bookId,
+      avg: sql<number>`COALESCE(AVG(${reviews.rating}), 0)::numeric`,
+      count: sql<number>`count(*)::int`,
+    }).from(reviews).where(eq(reviews.approved, true)).groupBy(reviews.bookId);
+
+    const map: Record<number, { avg: number; count: number }> = {};
+    for (const r of result) {
+      map[r.bookId] = { avg: Number(r.avg), count: r.count };
+    }
+    return map;
+  }
+
+  async getBlogPosts(publishedOnly = false): Promise<BlogPost[]> {
+    if (publishedOnly) {
+      return db.select().from(blogPosts).where(eq(blogPosts.published, true)).orderBy(desc(blogPosts.createdAt));
+    }
+    return db.select().from(blogPosts).orderBy(desc(blogPosts.createdAt));
+  }
+
+  async getBlogPost(id: number): Promise<BlogPost | undefined> {
+    const [post] = await db.select().from(blogPosts).where(eq(blogPosts.id, id));
+    return post;
+  }
+
+  async createBlogPost(post: InsertBlogPost): Promise<BlogPost> {
+    const [created] = await db.insert(blogPosts).values(post).returning();
+    return created;
+  }
+
+  async updateBlogPost(id: number, updates: Partial<InsertBlogPost>): Promise<BlogPost> {
+    const [updated] = await db.update(blogPosts).set(updates).where(eq(blogPosts.id, id)).returning();
+    return updated;
+  }
+
+  async deleteBlogPost(id: number): Promise<void> {
+    await db.delete(blogPosts).where(eq(blogPosts.id, id));
   }
 }
 

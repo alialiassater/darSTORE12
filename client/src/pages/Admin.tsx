@@ -30,13 +30,15 @@ import {
   Plus, Pencil, Trash2, Loader2, Image as ImageIcon,
   BookOpen, Package, Users, Activity, BarChart3, Tag, Eye,
   ShoppingBag, UserPlus, UserX, ToggleLeft, ToggleRight, History,
-  MapPin, Truck, Save, Check, X, Minus
+  MapPin, Truck, Save, Check, X, Minus, FileText, Newspaper, Upload, Star
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertBookSchema, insertCategorySchema, type InsertBook, type Book, type Category, type InsertCategory } from "@shared/schema";
+import { insertBookSchema, insertCategorySchema, type InsertBook, type Book, type Category, type InsertCategory, type SitePage, type BlogPost, type Review } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, apiUrl } from "@/lib/queryClient";
+import { Label } from "@/components/ui/label";
+import { Switch as SwitchUI } from "@/components/ui/switch";
 
 const CATEGORIES_STATIC = ["Fiction", "History", "Science", "Philosophy", "Children", "Religious", "Literature", "Religion"];
 
@@ -67,6 +69,8 @@ export default function Admin() {
           <TabsTrigger value="orders" className="gap-2" data-testid="tab-orders"><Package className="w-4 h-4" />{t("الطلبات", "Orders")}</TabsTrigger>
           <TabsTrigger value="customers" className="gap-2" data-testid="tab-customers"><Users className="w-4 h-4" />{t("العملاء", "Customers")}</TabsTrigger>
           <TabsTrigger value="shipping" className="gap-2" data-testid="tab-shipping"><Truck className="w-4 h-4" />{t("الشحن", "Shipping")}</TabsTrigger>
+          <TabsTrigger value="about" className="gap-2" data-testid="tab-about"><FileText className="w-4 h-4" />{t("من نحن", "About")}</TabsTrigger>
+          <TabsTrigger value="blog" className="gap-2" data-testid="tab-blog"><Newspaper className="w-4 h-4" />{t("المدونة", "Blog")}</TabsTrigger>
           <TabsTrigger value="activity" className="gap-2" data-testid="tab-activity"><Activity className="w-4 h-4" />{t("السجل", "Activity")}</TabsTrigger>
         </TabsList>
 
@@ -76,6 +80,8 @@ export default function Admin() {
         <TabsContent value="orders"><OrdersTab /></TabsContent>
         <TabsContent value="customers"><CustomersTab /></TabsContent>
         <TabsContent value="shipping"><ShippingTab /></TabsContent>
+        <TabsContent value="about"><AboutTab /></TabsContent>
+        <TabsContent value="blog"><BlogTab /></TabsContent>
         <TabsContent value="activity"><ActivityTab /></TabsContent>
       </Tabs>
     </div>
@@ -273,7 +279,7 @@ function BookDialog({ mode, book }: { mode: "create" | "edit"; book?: Book }) {
               <FormField control={form.control} name="language" render={({ field }) => (<FormItem><FormLabel>{t("لغة الكتاب", "Language")}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="ar">العربية</SelectItem><SelectItem value="en">English</SelectItem><SelectItem value="both">Bilingual</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="isbn" render={({ field }) => (<FormItem><FormLabel>ISBN</FormLabel><FormControl><Input {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>)} />
             </div>
-            <FormField control={form.control} name="image" render={({ field }) => (<FormItem><FormLabel>{t("رابط الصورة", "Image URL")}</FormLabel><div className="flex gap-2"><FormControl><Input {...field} /></FormControl><div className="w-10 h-10 rounded border bg-muted flex items-center justify-center overflow-hidden shrink-0">{field.value ? <img src={field.value} className="w-full h-full object-cover" /> : <ImageIcon className="w-4 h-4 opacity-50" />}</div></div><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="image" render={({ field }) => (<FormItem><FormLabel>{t("صورة الغلاف", "Cover Image")}</FormLabel><div className="flex gap-2"><FormControl><Input {...field} placeholder={t("رابط أو ارفع صورة", "URL or upload image")} /></FormControl><label><Button type="button" variant="outline" size="icon" className="shrink-0" onClick={() => document.getElementById("book-cover-upload")?.click()}><Upload className="w-4 h-4" /></Button><input id="book-cover-upload" type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; const fd = new FormData(); fd.append("file", file); try { const res = await fetch(apiUrl("/api/upload"), { method: "POST", body: fd, credentials: "include" }); const data = await res.json(); if (data.url) field.onChange(data.url); } catch {} }} /></label><div className="w-10 h-10 rounded border bg-muted flex items-center justify-center overflow-hidden shrink-0">{field.value ? <img src={field.value} className="w-full h-full object-cover" /> : <ImageIcon className="w-4 h-4 opacity-50" />}</div></div><FormMessage /></FormItem>)} />
             <Button type="submit" className="w-full" disabled={isPending}>
               {isPending ? <Loader2 className="animate-spin" /> : mode === "create" ? t("إنشاء", "Create") : t("حفظ التغييرات", "Save Changes")}
             </Button>
@@ -1142,6 +1148,354 @@ function ActivityTab() {
           </TableBody>
         </Table>
       </Card>
+    </div>
+  );
+}
+
+function AboutTab() {
+  const { t } = useLanguage();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { data: page, isLoading } = useQuery<SitePage>({ queryKey: ["/api/pages/about"] });
+
+  const [titleAr, setTitleAr] = useState("");
+  const [titleEn, setTitleEn] = useState("");
+  const [contentAr, setContentAr] = useState("");
+  const [contentEn, setContentEn] = useState("");
+  const [visionAr, setVisionAr] = useState("");
+  const [visionEn, setVisionEn] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [addressAr, setAddressAr] = useState("");
+  const [addressEn, setAddressEn] = useState("");
+  const [loaded, setLoaded] = useState(false);
+
+  if (page && !loaded) {
+    setTitleAr(page.titleAr || "");
+    setTitleEn(page.titleEn || "");
+    setContentAr(page.contentAr || "");
+    setContentEn(page.contentEn || "");
+    try {
+      const extra = page.extraData ? JSON.parse(page.extraData) : {};
+      setVisionAr(extra.visionAr || "");
+      setVisionEn(extra.visionEn || "");
+      setPhone(extra.phone || "");
+      setEmail(extra.email || "");
+      setAddressAr(extra.addressAr || "");
+      setAddressEn(extra.addressEn || "");
+    } catch {}
+    setLoaded(true);
+  }
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const extraData = JSON.stringify({ visionAr, visionEn, phone, email, addressAr, addressEn });
+      await apiRequest("PUT", "/api/admin/pages/about", { titleAr, titleEn, contentAr, contentEn, extraData });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pages/about"] });
+      toast({ title: t("تم الحفظ", "Saved successfully") });
+    },
+    onError: () => toast({ title: t("فشل الحفظ", "Save failed"), variant: "destructive" }),
+  });
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <h2 className="text-xl font-bold">{t("تعديل صفحة من نحن", "Edit About Page")}</h2>
+        <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="gap-2" data-testid="button-save-about">
+          {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {t("حفظ التغييرات", "Save Changes")}
+        </Button>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <h3 className="font-semibold">{t("المحتوى بالعربية", "Arabic Content")}</h3>
+            <div>
+              <Label>{t("العنوان", "Title")}</Label>
+              <Input value={titleAr} onChange={(e) => setTitleAr(e.target.value)} dir="rtl" data-testid="input-about-title-ar" />
+            </div>
+            <div>
+              <Label>{t("المحتوى", "Content")}</Label>
+              <Textarea value={contentAr} onChange={(e) => setContentAr(e.target.value)} dir="rtl" rows={6} data-testid="input-about-content-ar" />
+            </div>
+            <div>
+              <Label>{t("الرؤية", "Vision")}</Label>
+              <Textarea value={visionAr} onChange={(e) => setVisionAr(e.target.value)} dir="rtl" rows={3} data-testid="input-about-vision-ar" />
+            </div>
+            <div>
+              <Label>{t("العنوان البريدي", "Address")}</Label>
+              <Input value={addressAr} onChange={(e) => setAddressAr(e.target.value)} dir="rtl" data-testid="input-about-address-ar" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <h3 className="font-semibold">{t("المحتوى بالإنجليزية", "English Content")}</h3>
+            <div>
+              <Label>{t("العنوان", "Title")}</Label>
+              <Input value={titleEn} onChange={(e) => setTitleEn(e.target.value)} data-testid="input-about-title-en" />
+            </div>
+            <div>
+              <Label>{t("المحتوى", "Content")}</Label>
+              <Textarea value={contentEn} onChange={(e) => setContentEn(e.target.value)} rows={6} data-testid="input-about-content-en" />
+            </div>
+            <div>
+              <Label>{t("الرؤية", "Vision")}</Label>
+              <Textarea value={visionEn} onChange={(e) => setVisionEn(e.target.value)} rows={3} data-testid="input-about-vision-en" />
+            </div>
+            <div>
+              <Label>{t("العنوان البريدي", "Address")}</Label>
+              <Input value={addressEn} onChange={(e) => setAddressEn(e.target.value)} data-testid="input-about-address-en" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <h3 className="font-semibold">{t("معلومات الاتصال", "Contact Info")}</h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <Label>{t("الهاتف", "Phone")}</Label>
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} data-testid="input-about-phone" />
+            </div>
+            <div>
+              <Label>{t("البريد الإلكتروني", "Email")}</Label>
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} data-testid="input-about-email" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function BlogTab() {
+  const { t, language } = useLanguage();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { data: posts, isLoading } = useQuery<BlogPost[]>({
+    queryKey: ["/api/blog"],
+    queryFn: async () => {
+      const res = await fetch(apiUrl("/api/blog?published=false"), { credentials: "include" });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+  });
+
+  const [editing, setEditing] = useState<BlogPost | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [formData, setFormData] = useState({ titleAr: "", titleEn: "", contentAr: "", contentEn: "", imageUrl: "", published: true });
+
+  const openCreate = () => {
+    setFormData({ titleAr: "", titleEn: "", contentAr: "", contentEn: "", imageUrl: "", published: true });
+    setCreating(true);
+    setEditing(null);
+  };
+
+  const openEdit = (post: BlogPost) => {
+    setFormData({
+      titleAr: post.titleAr,
+      titleEn: post.titleEn,
+      contentAr: post.contentAr,
+      contentEn: post.contentEn,
+      imageUrl: post.imageUrl || "",
+      published: post.published,
+    });
+    setEditing(post);
+    setCreating(false);
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const body = { ...formData, imageUrl: formData.imageUrl || null };
+      if (editing) {
+        await apiRequest("PUT", `/api/admin/blog/${editing.id}`, body);
+      } else {
+        await apiRequest("POST", "/api/admin/blog", body);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/blog"] });
+      setEditing(null);
+      setCreating(false);
+      toast({ title: t("تم الحفظ", "Saved") });
+    },
+    onError: () => toast({ title: t("فشل الحفظ", "Save failed"), variant: "destructive" }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/blog/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/blog"] });
+      toast({ title: t("تم الحذف", "Deleted") });
+    },
+  });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const res = await fetch(apiUrl("/api/upload"), { method: "POST", body: fd, credentials: "include" });
+      const data = await res.json();
+      if (data.url) setFormData(prev => ({ ...prev, imageUrl: data.url }));
+    } catch {
+      toast({ title: t("فشل رفع الصورة", "Upload failed"), variant: "destructive" });
+    }
+  };
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div>;
+
+  if (creating || editing) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <h2 className="text-xl font-bold">{editing ? t("تعديل المقال", "Edit Post") : t("مقال جديد", "New Post")}</h2>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => { setCreating(false); setEditing(null); }}>{t("إلغاء", "Cancel")}</Button>
+            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="gap-2" data-testid="button-save-blog">
+              {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {t("حفظ", "Save")}
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <h3 className="font-semibold">{t("العربية", "Arabic")}</h3>
+              <div>
+                <Label>{t("العنوان", "Title")}</Label>
+                <Input value={formData.titleAr} onChange={(e) => setFormData(p => ({ ...p, titleAr: e.target.value }))} dir="rtl" data-testid="input-blog-title-ar" />
+              </div>
+              <div>
+                <Label>{t("المحتوى", "Content")}</Label>
+                <Textarea value={formData.contentAr} onChange={(e) => setFormData(p => ({ ...p, contentAr: e.target.value }))} dir="rtl" rows={10} data-testid="input-blog-content-ar" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <h3 className="font-semibold">{t("الإنجليزية", "English")}</h3>
+              <div>
+                <Label>{t("العنوان", "Title")}</Label>
+                <Input value={formData.titleEn} onChange={(e) => setFormData(p => ({ ...p, titleEn: e.target.value }))} data-testid="input-blog-title-en" />
+              </div>
+              <div>
+                <Label>{t("المحتوى", "Content")}</Label>
+                <Textarea value={formData.contentEn} onChange={(e) => setFormData(p => ({ ...p, contentEn: e.target.value }))} rows={10} data-testid="input-blog-content-en" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label>{t("صورة المقال", "Post Image")}</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input value={formData.imageUrl} onChange={(e) => setFormData(p => ({ ...p, imageUrl: e.target.value }))} placeholder="URL" />
+                  <label>
+                    <Button variant="outline" size="icon" className="shrink-0" onClick={() => document.getElementById("blog-img-upload")?.click()}>
+                      <Upload className="w-4 h-4" />
+                    </Button>
+                    <input id="blog-img-upload" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  </label>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 pt-6">
+                <SwitchUI checked={formData.published} onCheckedChange={(v) => setFormData(p => ({ ...p, published: v }))} data-testid="switch-blog-published" />
+                <Label>{t("منشور", "Published")}</Label>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <h2 className="text-xl font-bold">{t("إدارة المدونة", "Blog Management")}</h2>
+        <Button onClick={openCreate} className="gap-2" data-testid="button-new-blog">
+          <Plus className="w-4 h-4" /> {t("مقال جديد", "New Post")}
+        </Button>
+      </div>
+
+      {(!posts || posts.length === 0) ? (
+        <Card>
+          <CardContent className="p-12 text-center text-muted-foreground">
+            <Newspaper className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>{t("لا توجد مقالات بعد", "No blog posts yet")}</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="overflow-hidden">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                <TableHead>{t("العنوان", "Title")}</TableHead>
+                <TableHead>{t("الحالة", "Status")}</TableHead>
+                <TableHead>{t("التاريخ", "Date")}</TableHead>
+                <TableHead>{t("إجراءات", "Actions")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {posts.map((post) => (
+                <TableRow key={post.id} data-testid={`row-blog-${post.id}`}>
+                  <TableCell className="font-medium">
+                    {language === "ar" ? post.titleAr : post.titleEn}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={post.published ? "default" : "secondary"} className="no-default-hover-elevate no-default-active-elevate">
+                      {post.published ? t("منشور", "Published") : t("مسودة", "Draft")}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : "-"}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(post)} data-testid={`button-edit-blog-${post.id}`}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" data-testid={`button-delete-blog-${post.id}`}>
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t("تأكيد الحذف", "Confirm Delete")}</AlertDialogTitle>
+                            <AlertDialogDescription>{t("هل أنت متأكد من حذف هذا المقال؟", "Are you sure you want to delete this post?")}</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t("إلغاء", "Cancel")}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteMutation.mutate(post.id)}>{t("حذف", "Delete")}</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
     </div>
   );
 }

@@ -32,6 +32,8 @@ export function Navbar() {
   const navLinks = [
     { href: "/", label: t("الرئيسية", "Home") },
     { href: "/store", label: t("المتجر", "Store") },
+    { href: "/about", label: t("من نحن", "About") },
+    { href: "/blog", label: t("المدونة", "Blog") },
   ];
 
   return (

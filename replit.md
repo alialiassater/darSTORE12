@@ -4,7 +4,7 @@
 
 This is a bilingual (Arabic/English) online bookstore web application for a publishing house called "Dar Ali BenZid for Printing & Publishing" (دار علي بن زيد للطباعة والنشر). The app allows users to browse and view books, while admins can manage the book catalog through a dashboard. It supports RTL (Arabic) and LTR (English) layouts with a language toggle.
 
-The current UI branding references "Al-Warraq Bookstore" / "مكتبة الوراق" — this may need to be updated to match the intended publishing house name from the project requirements.
+The UI branding uses "Dar Ali BenZid" / "دار علي بن زيد" throughout.
 
 ## User Preferences
 
@@ -38,7 +38,10 @@ The project follows a monorepo pattern with three top-level directories:
 - `/signup` — Registration page
 - `/account` — Customer dashboard (profile editing, order history)
 - `/checkout` — Checkout page (requires login)
-- `/admin` — Admin dashboard for CRUD operations on books (admin/employee roles)
+- `/about` — About Us page (editable content from admin)
+- `/blog` — Blog listing page
+- `/blog/:id` — Individual blog post page
+- `/admin` — Admin dashboard for CRUD operations on books, categories, orders, customers, shipping, about page, blog posts (admin/employee roles)
 
 **Path Aliases**:
 - `@/` → `client/src/`
@@ -78,6 +81,9 @@ The project follows a monorepo pattern with three top-level directories:
 - `orders` — id, userId, customerName, phone, address, city, wilayaCode, wilayaName, baladiya, shippingPrice, status, total, notes, createdAt
 - `order_items` — id, orderId, bookId, quantity, unitPrice
 - `activity_logs` — id, adminId, adminEmail, action, entityType, entityId, details, createdAt
+- `site_pages` — id, slug (unique), titleAr, titleEn, contentAr, contentEn, imageUrl, extraData (JSON), updatedAt
+- `reviews` — id, bookId, userId, userName, rating (1-5), comment, approved (boolean), createdAt
+- `blog_posts` — id, titleAr, titleEn, contentAr, contentEn, imageUrl, published (boolean), createdAt
 
 ### Shared Contract Layer (`shared/`)
 
