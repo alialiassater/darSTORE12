@@ -1,5 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import cors from "cors";
 import { storage } from "./storage";
 import { setupAuth, hashPassword } from "./auth";
 import { api } from "@shared/routes";
@@ -43,6 +44,39 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  const allowedOrigins = [
+    "https://daralibenzid.dz",
+    "https://www.daralibenzid.dz",
+    "http://daralibenzid.dz",
+    "http://www.daralibenzid.dz",
+    "https://darstore12.onrender.com",
+    "http://localhost:5000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5000",
+    "http://127.0.0.1:5173",
+  ];
+  app.use(cors({
+    origin: (origin, callback) => {
+      // Log the origin for debugging
+      if (origin) console.log("Incoming request from origin:", origin);
+      callback(null, true);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+  }));
+  // Using a middleware for OPTIONS instead of app.options to avoid pathToRegexp issues
+  app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') {
+      res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
+      res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept, Origin");
+      res.header("Access-Control-Allow-Credentials", "true");
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
   const { hashPassword } = setupAuth(app);
 
   // === AUTH ===
