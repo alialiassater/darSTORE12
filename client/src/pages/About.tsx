@@ -124,11 +124,11 @@ function AdminEditDialog({ page, extraData }: { page: SitePage | null; extraData
                 <Input value={titleAr} onChange={(e) => setTitleAr(e.target.value)} dir="rtl" data-testid="input-edit-title-ar" />
               </div>
               <div>
-                <Label>{t("قصة دار النشر", "Publishing House Story")}</Label>
+                <Label className="text-primary font-bold">{t("قصة دار النشر", "Publishing House Story")}</Label>
                 <Textarea value={contentAr} onChange={(e) => setContentAr(e.target.value)} dir="rtl" rows={6} data-testid="input-edit-content-ar" />
               </div>
               <div>
-                <Label>{t("الرؤية والهدف", "Vision & Goal")}</Label>
+                <Label className="text-primary font-bold">{t("الرؤية والهدف", "Vision & Goal")}</Label>
                 <Textarea value={visionAr} onChange={(e) => setVisionAr(e.target.value)} dir="rtl" rows={4} data-testid="input-edit-vision-ar" />
               </div>
               <div>
@@ -142,11 +142,11 @@ function AdminEditDialog({ page, extraData }: { page: SitePage | null; extraData
                 <Input value={titleEn} onChange={(e) => setTitleEn(e.target.value)} data-testid="input-edit-title-en" />
               </div>
               <div>
-                <Label>{t("قصة دار النشر", "Publishing House Story")}</Label>
+                <Label className="text-primary font-bold">{t("قصة دار النشر", "Publishing House Story")}</Label>
                 <Textarea value={contentEn} onChange={(e) => setContentEn(e.target.value)} rows={6} data-testid="input-edit-content-en" />
               </div>
               <div>
-                <Label>{t("الرؤية والهدف", "Vision & Goal")}</Label>
+                <Label className="text-primary font-bold">{t("الرؤية والهدف", "Vision & Goal")}</Label>
                 <Textarea value={visionEn} onChange={(e) => setVisionEn(e.target.value)} rows={4} data-testid="input-edit-vision-en" />
               </div>
               <div>

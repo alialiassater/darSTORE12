@@ -226,6 +226,53 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* About Section Shortcut */}
+      <section className="py-16 bg-background border-y">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="relative group">
+              <div className="aspect-video rounded-2xl overflow-hidden shadow-2xl">
+                <img 
+                  src={apiUrl("/about-hero.jpg")} 
+                  alt="About Dar Ali BenZid" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="absolute -bottom-6 -right-6 w-48 h-48 bg-accent/10 rounded-full blur-3xl -z-10"></div>
+            </div>
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-bold">
+                <BookOpen className="w-4 h-4" />
+                {t("من نحن", "About Us")}
+              </div>
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-primary">
+                {t("قصة دار علي بن زيد", "The Story of Dar Ali BenZid")}
+              </h2>
+              <p className="text-lg text-muted-foreground leading-relaxed line-clamp-4">
+                {language === "ar" 
+                  ? "دار علي بن زيد للطباعة والنشر هي دار جزائرية متخصصة في طباعة ونشر الكتب المتميزة بمختلف المجالات. نسعى دائماً لتقديم محتوى هادف وجوة طباعة عالية الجودة."
+                  : "Dar Ali BenZid for Printing & Publishing is an Algerian house specializing in printing and publishing distinguished books in various fields. We always strive to provide meaningful content and high-quality printing."}
+              </p>
+              <div className="flex gap-4">
+                <Link href="/about">
+                  <Button size="lg" className="hover-elevate">
+                    {t("اقرأ القصة كاملة", "Read Full Story")}
+                  </Button>
+                </Link>
+                {isAdmin && (
+                  <Link href="/about">
+                    <Button size="lg" variant="outline" className="gap-2">
+                      <Pencil className="w-4 h-4" />
+                      {t("تعديل", "Edit")}
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       
       {/* Newsletter / CTA */}
       <section className="py-20 container mx-auto px-4">
