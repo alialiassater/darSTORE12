@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, hashPassword } from "./auth";
+import { sendOrderStatusEmail, sendNewOrderEmail } from "./lib/mail";
 import { api } from "@shared/routes";
 import { insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
@@ -295,6 +296,15 @@ export async function registerRoutes(
       const total = subtotal + shippingPrice;
       const userId = (req.user as User).id;
       const order = await storage.createOrder(userId, input.customerName, input.phone, input.address, input.city, input.notes, total, bookPrices, input.wilayaCode, input.wilayaName, input.baladiya, shippingPrice);
+
+      // Send confirmation email
+      if (userId) {
+        const customer = await storage.getUser(userId);
+        if (customer && customer.email) {
+          await sendNewOrderEmail(customer.email, order);
+        }
+      }
+
       res.status(201).json(order);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -332,6 +342,15 @@ export async function registerRoutes(
       if (!existingOrder) return res.status(404).json({ message: "Order not found" });
 
       const order = await storage.updateOrderStatus(orderId, status);
+
+      // Send email notification to user
+      const fullOrder = await storage.getOrder(orderId);
+      if (fullOrder && fullOrder.userId) {
+        const customer = await storage.getUser(fullOrder.userId);
+        if (customer && customer.email) {
+          await sendOrderStatusEmail(customer.email, fullOrder);
+        }
+      }
 
       await logAdminAction(req, `Updated order status to ${status}`, "order", order.id);
       res.json(order);
