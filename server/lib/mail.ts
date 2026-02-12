@@ -2,12 +2,16 @@ import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
   host: "smtp.daralibenzid.dz",
-  port: 465,
-  secure: true, // true for 465, false for other ports
+  port: 587,
+  secure: false, // Use STARTTLS
   auth: {
     user: "store@daralibenzid.dz",
     pass: process.env.SMTP_PASSWORD,
   },
+  tls: {
+    rejectUnauthorized: false // Helps with some shared hosting certificates
+  },
+  connectionTimeout: 10000,
 });
 
 export async function sendOrderStatusEmail(to: string, orderDetails: any) {
