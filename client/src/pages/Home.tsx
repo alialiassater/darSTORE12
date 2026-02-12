@@ -41,15 +41,15 @@ export default function Home() {
           </h1>
           <p className="text-lg md:text-xl text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-sm font-medium">
             {t(
-              "دار علي بن زيد للطباعة والنشر تقدم لكم نخبة من أفضل الكتب العربية والعالمية. تصفحوا اصداراتنا .",
-              "Dar Ali BenZid for Printing & Publishing offers لكم a selection of the best Arabic and international books. Browse our carefully curated collection.",
+              "دار علي بن زيد للطباعة والنشر تقدم لكم نخبة من أفضل الكتب العربية والعالمية. تصفحوا إصداراتنا.",
+              "Dar Ali BenZid for Printing & Publishing offers you a selection of the best Arabic and international books. Browse our carefully curated collection.",
             )}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/store">
               <Button
                 size="lg"
-                className="bg-accent text-accent-foreground hover-elevate active-elevate-2 shadow-xl text-lg px-8"
+                className="bg-[#e65100] hover:bg-[#bf4300] text-white shadow-xl text-lg px-8"
               >
                 {t("تصفح الكتب", "Browse Books")}
               </Button>
