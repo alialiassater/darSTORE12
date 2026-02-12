@@ -2,14 +2,14 @@ import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
   host: "smtp.daralibenzid.dz",
-  port: 587,
-  secure: false, // Use STARTTLS
+  port: 25,
+  secure: false, // Port 25 is typically non-SSL
   auth: {
     user: "store@daralibenzid.dz",
     pass: process.env.SMTP_PASSWORD,
   },
   tls: {
-    rejectUnauthorized: false // Helps with some shared hosting certificates
+    rejectUnauthorized: false
   },
   connectionTimeout: 10000,
 });
